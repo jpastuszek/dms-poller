@@ -1,0 +1,75 @@
+require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
+
+describe PollerModule do
+	describe PollerModule::Probe do
+		subject do
+			PollerModule::Probe.new do
+				collect 'CPU usage', 'total', 'idle', 3123
+				collect 'CPU usage', 'total', 'usage', 12
+				collect 'CPU usage', 'total', 'nice', 342
+				collect 'CPU usage', 'CPU 1', 'idle', 3123
+				collect 'CPU usage', 'CPU 1', 'usage', 12
+				collect 'CPU usage', 'CPU 2', 'nice', 342
+				collect 'system', 'process', 'context switches', 321231
+				collect 'system', 'process', 'context switches', 321231
+				collect 'system', 'process', 'running', 9
+				collect 'system', 'process', 'blocked', 0
+			end
+		end
+
+		it "provides RawDatum objects" do
+			data = subject.run
+
+			data.should have(10).items
+
+			data.first.should be_a RawDatum
+			data.first.type.should == 'CPU usage'
+			data.first.group.should == 'total'
+			data.first.component.should == 'idle'
+			data.first.value.should == 3123
+		end
+	end
+
+	context "as a collection of Probes" do
+		subject do
+			PollerModule.new do
+				probe(:sysstat) do
+					collect 'CPU usage', 'total', 'idle', 3123
+					collect 'system', 'process', 'blocked', 0
+				end
+
+				probe(:memory) do
+					collect 'system', '', 'total', 8182644
+					collect 'system', '', 'free', 5577396
+					collect 'system', '', 'buffers', 254404
+				end
+			end
+		end
+
+		it "provides access to probes" do
+			subject[:sysstat].should be_a PollerModule::Probe
+			subject[:memory].should be_a PollerModule::Probe
+
+			probes = []
+			subject.each_pair do |name, probe|
+				probes << [name, probe]
+			end
+
+			probes.first.first.should == :sysstat
+			probes.first.last.should be_a PollerModule::Probe
+			probes.last.first.should == :memory
+			probes.last.last.should be_a PollerModule::Probe
+		end
+	end
+	
+	it "can be loaded from string" do
+		m = PollerModule.load(<<'EOF')
+			probe(:sysstat) do
+				collect 'CPU usage', 'total', 'idle', 3123
+				collect 'system', 'process', 'blocked', 0
+			end
+EOF
+		m[:sysstat].should be_a PollerModule::Probe
+	end
+end
+
