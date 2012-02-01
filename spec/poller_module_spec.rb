@@ -3,7 +3,7 @@ require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 describe PollerModule do
 	describe PollerModule::Probe do
 		subject do
-			PollerModule::Probe.new(:test, :system) do
+			PollerModule::Probe.new(:system, :sysstat) do
 				collect 'CPU usage', 'total', 'idle', 3123
 				collect 'CPU usage', 'total', 'usage', 12
 				collect 'CPU usage', 'total', 'nice', 342
@@ -17,6 +17,11 @@ describe PollerModule do
 			end
 		end
 
+		it "has a module and probe name" do
+			subject.module_name.should == :system
+			subject.probe_name.should == :sysstat
+		end
+
 		it "provides RawDatum objects" do
 			data = subject.run
 
@@ -28,63 +33,54 @@ describe PollerModule do
 			data.first.component.should == 'idle'
 			data.first.value.should == 3123
 		end
+
+
+		it "logs collector exceptions" do
+			p = PollerModule::Probe.new(:system, :sysstat) do
+				collect 'CPU usage', 'total', 'idle', 3123
+				raise "test error"
+				collect 'system', 'process', 'blocked', 0
+			end
+
+			stderr_read do
+				data = p.run
+				data.should have(1).element
+			end.should include("Probe system/sysstat raised error: RuntimeError: test error")
+		end
 	end
 
-	context "as a collection of Probes" do
-		subject do
-			PollerModule.new(:test) do
-				probe(:sysstat) do
-					collect 'CPU usage', 'total', 'idle', 3123
-					collect 'system', 'process', 'blocked', 0
-				end
-
-				probe(:memory) do
-					collect 'system', '', 'total', 8182644
-					collect 'system', '', 'free', 5577396
-					collect 'system', '', 'buffers', 254404
-				end
-			end
-		end
-
-		it "provides access to probes" do
-			subject[:sysstat].should be_a PollerModule::Probe
-			subject[:memory].should be_a PollerModule::Probe
-
-			probes = []
-			subject.each_pair do |name, probe|
-				probes << [name, probe]
+	subject do
+		PollerModule.new(:system) do
+			probe(:sysstat) do
+				collect 'CPU usage', 'total', 'idle', 3123
+				collect 'system', 'process', 'blocked', 0
 			end
 
-			probes.first.first.should == :sysstat
-			probes.first.last.should be_a PollerModule::Probe
-			probes.last.first.should == :memory
-			probes.last.last.should be_a PollerModule::Probe
+			probe(:memory) do
+				collect 'system', '', 'total', 8182644
+				collect 'system', '', 'free', 5577396
+				collect 'system', '', 'buffers', 254404
+			end
 		end
+	end
+
+	it "has a name" do
+		subject.module_name.should == :system
+	end
+
+	it "provides access to probes" do
+		subject[:sysstat].should be_a PollerModule::Probe
+		subject[:memory].should be_a PollerModule::Probe
 	end
 	
 	it "can be loaded from string" do
-		m = PollerModule.load(:test, <<'EOF')
+		m = PollerModule.load(:system, <<'EOF')
 			probe(:sysstat) do
 				collect 'CPU usage', 'total', 'idle', 3123
 				collect 'system', 'process', 'blocked', 0
 			end
 EOF
 		m[:sysstat].should be_a PollerModule::Probe
-	end
-
-	it "logs poller exceptions" do
-		m = PollerModule.new(:test) do
-			probe(:sysstat) do
-				collect 'CPU usage', 'total', 'idle', 3123
-				raise "test error"
-				collect 'system', 'process', 'blocked', 0
-			end
-		end
-
-		stderr_read do
-			data = m[:sysstat].run
-			data.should have(1).element
-		end.should include("Probe test/sysstat raised error: RuntimeError: test error")
 	end
 end
 
