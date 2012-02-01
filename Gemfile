@@ -1,5 +1,7 @@
 source "http://rubygems.org"
 
+gem "cli", "~> 1.1.1"
+
 #gem "dms-core", :git => "git@github.com:jpastuszek/dms-core.git"
 gem "dms-core", :path => "~/Project/dms-core"
 
