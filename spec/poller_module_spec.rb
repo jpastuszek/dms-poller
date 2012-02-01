@@ -3,7 +3,7 @@ require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 describe PollerModule do
 	describe PollerModule::Probe do
 		subject do
-			PollerModule::Probe.new do
+			PollerModule::Probe.new(:test, :system) do
 				collect 'CPU usage', 'total', 'idle', 3123
 				collect 'CPU usage', 'total', 'usage', 12
 				collect 'CPU usage', 'total', 'nice', 342
@@ -32,7 +32,7 @@ describe PollerModule do
 
 	context "as a collection of Probes" do
 		subject do
-			PollerModule.new do
+			PollerModule.new(:test) do
 				probe(:sysstat) do
 					collect 'CPU usage', 'total', 'idle', 3123
 					collect 'system', 'process', 'blocked', 0
@@ -63,13 +63,28 @@ describe PollerModule do
 	end
 	
 	it "can be loaded from string" do
-		m = PollerModule.load(<<'EOF')
+		m = PollerModule.load(:test, <<'EOF')
 			probe(:sysstat) do
 				collect 'CPU usage', 'total', 'idle', 3123
 				collect 'system', 'process', 'blocked', 0
 			end
 EOF
 		m[:sysstat].should be_a PollerModule::Probe
+	end
+
+	it "logs poller exceptions" do
+		m = PollerModule.new(:test) do
+			probe(:sysstat) do
+				collect 'CPU usage', 'total', 'idle', 3123
+				raise "test error"
+				collect 'system', 'process', 'blocked', 0
+			end
+		end
+
+		stderr_read do
+			data = m[:sysstat].run
+			data.should have(1).element
+		end.should include("Probe test/sysstat raised error: RuntimeError: test error")
 	end
 end
 
