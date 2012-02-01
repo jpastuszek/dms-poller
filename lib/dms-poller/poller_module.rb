@@ -1,4 +1,5 @@
 require 'dms-core'
+require 'pathname'
 
 class PollerModule < Hash
 	class Probe
@@ -45,6 +46,34 @@ class PollerModule < Hash
 
 	def probe(probe_name, &block)
 		self[probe_name.to_sym] = Probe.new(module_name, probe_name, &block)
+	end
+end
+
+class PollerModules < Array
+	def load_directory(module_dir)
+		module_dir = Pathname.new(module_dir.to_s)
+		
+		module_dir.children.select{|f| f.extname == '.rb'}.sort.each do |module_file|
+			load_file(module_file)
+		end
+	end
+
+	def load_file(module_file)
+		module_file = Pathname.new(module_file.to_s)
+
+		module_name = module_file.basename(module_file.extname).to_s
+		log.info "loading module '#{module_name}' from: #{module_file}"
+		begin
+			m = PollerModule.load(module_name, module_file.read)
+			if m.keys.empty?
+				log.warn "module '#{module_name}' defines not probes"
+			else
+				log.info { "module '#{module_name}' probes: #{m.keys.map{|p| "#{p.to_s}"}.sort.join(', ')}" }
+			end
+			self << m
+		rescue => e
+			log.error "error while loading module '#{module_name}': #{e.class.name}: #{e.message}"
+		end
 	end
 end
 

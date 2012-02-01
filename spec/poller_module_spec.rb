@@ -1,4 +1,6 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
+require 'tmpdir'
+require 'tempfile'
 
 describe PollerModule do
 	describe PollerModule::Probe do
@@ -33,7 +35,6 @@ describe PollerModule do
 			data.first.component.should == 'idle'
 			data.first.value.should == 3123
 		end
-
 
 		it "logs collector exceptions" do
 			p = PollerModule::Probe.new(:system, :sysstat) do
@@ -81,6 +82,126 @@ describe PollerModule do
 			end
 EOF
 		m[:sysstat].should be_a PollerModule::Probe
+	end
+end
+
+describe PollerModules do
+	before :all do
+		@modules_dir = Pathname.new(Dir.mktmpdir('poller_moduled.d'))
+
+		(@modules_dir + 'system.rb').open('w') do |f|
+			f.write <<'EOF'
+probe(:sysstat) do
+	collect 'CPU usage', 'total', 'idle', 3123
+	collect 'system', 'process', 'blocked', 0
+end
+
+probe(:memory) do
+	collect 'system', '', 'total', 8182644
+	collect 'system', '', 'free', 5577396
+	collect 'system', '', 'buffers', 254404
+end
+EOF
+		end
+
+		(@modules_dir + 'empty.rb').open('w') do |f|
+			f.write('')
+		end
+
+		(@modules_dir + 'jmx.rb').open('w') do |f|
+			f.write <<'EOF'
+probe(:gc) do
+	collect 'JMX', '1234/GC/PermGen', 'collections', 231
+end
+EOF
+		end
+	end
+
+	it "should load module from file and log that" do
+		pms = PollerModules.new
+		
+		out = stderr_read do
+			pms.load_file(@modules_dir + 'system.rb')
+		end
+
+		pms.should have(1).module
+		pms.first.should be_a PollerModule
+
+		pms.first.keys.should have(2).probes
+		pms.first[:sysstat].should be_a PollerModule::Probe
+		pms.first[:memory].should be_a PollerModule::Probe
+
+		out.should include("loading module 'system' from:")
+		out.should include("module 'system' probes: memory, sysstat")
+	end
+
+	it "should log warning message if loaded file has no probe definitions" do
+		pms = PollerModules.new
+		
+		out = stderr_read do
+			pms.load_file(@modules_dir + 'empty.rb')
+		end
+
+		pms.should have(1).module
+		pms.first.should be_a PollerModule
+
+		out.should include("WARN")
+		out.should include("module 'empty' defines not probes")
+	end
+
+	it "should load directory in alphabetical order and log that" do
+		pms = PollerModules.new
+		
+		out = stderr_read do
+			pms.load_directory(@modules_dir)
+		end
+
+		pms.should have(3).module
+
+		pms[0].should be_a PollerModule
+		pms[0].module_name.should == :empty
+		pms[0].keys.should have(0).probes
+
+		pms[1].should be_a PollerModule
+		pms[1].module_name.should == :jmx
+		pms[1].should include(:gc)
+
+		pms[2].should be_a PollerModule
+		pms[2].module_name.should == :system
+		pms[2].should include(:sysstat)
+		pms[2].should include(:memory)
+
+		out.should include("WARN")
+		out.should include("loading module 'empty' from:")
+		out.should include("module 'empty' defines not probes")
+
+		out.should include("loading module 'system' from:")
+		out.should include("module 'system' probes: memory, sysstat")
+
+		out.should include("loading module 'jmx' from:")
+		out.should include("module 'jmx' probes: gc")
+	end
+
+	it "should log error if module cannot be loaded" do
+		module_file = Tempfile.new('bad_module')
+		module_file.write 'raise "test error"'
+		module_file.close
+
+		pms = PollerModules.new
+		
+		out = stderr_read do
+			pms.load_file(module_file.path)
+		end
+
+		pms.should have(0).module
+
+		out.should include("ERROR")
+		out.should include("error while loading module 'bad_module")
+		out.should include("': RuntimeError: (eval):1:in `load': test error")
+	end
+
+	after :all do
+		@modules_dir.rmtree
 	end
 end
 
