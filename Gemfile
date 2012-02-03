@@ -1,7 +1,7 @@
 source "http://rubygems.org"
 
 gem "cli", "~> 1.1.1"
-gem "periodic-scheduler", "~> 0.1.0"
+gem "periodic-scheduler", "~> 0.2.0"
 gem "i18n", ">= 0.5.0"
 gem "activesupport", "~> 3.0.0"
 
