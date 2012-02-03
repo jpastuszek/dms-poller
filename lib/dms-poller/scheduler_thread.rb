@@ -1,7 +1,7 @@
 require 'periodic-scheduler'
 
 class SchedulerThread < Thread
-	def initialize(poller_modules, quantum = 1, run_cycles = nil, time_scale = 1.0)
+	def initialize(poller_modules, quantum = 1, run_cycles = nil, time_scale = 1.0, startup_run = false)
 		quantum *= time_scale
 
 		log.warn "using time scale of #{time_scale}" if time_scale != 1.0
@@ -17,7 +17,7 @@ class SchedulerThread < Thread
 
 				log.info "scheduling probe #{poller_module_name}/#{probe_name} to run every #{schedule} seconds"
 
-				@probes << probe # for startup run
+				@probes << probe if startup_run
 				@scheduler.schedule(schedule, true) do
 					@probes << probe
 				end
