@@ -124,12 +124,12 @@ EOF
 			pms.load_file(@modules_dir + 'system.rb')
 		end
 
-		pms.should have(1).module
-		pms.first.should be_a PollerModule
+		pms.keys.should have(1).module
+		pms[:system].should be_a PollerModule
 
-		pms.first.keys.should have(2).probes
-		pms.first[:sysstat].should be_a PollerModule::Probe
-		pms.first[:memory].should be_a PollerModule::Probe
+		pms[:system].keys.should have(2).probes
+		pms[:system][:sysstat].should be_a PollerModule::Probe
+		pms[:system][:memory].should be_a PollerModule::Probe
 
 		out.should include("loading module 'system' from:")
 		out.should include("module 'system' probes: memory, sysstat")
@@ -142,8 +142,8 @@ EOF
 			pms.load_file(@modules_dir + 'empty.rb')
 		end
 
-		pms.should have(1).module
-		pms.first.should be_a PollerModule
+		pms.keys.should have(1).module
+		pms[:empty].should be_a PollerModule
 
 		out.should include("WARN")
 		out.should include("module 'empty' defines not probes")
@@ -156,20 +156,20 @@ EOF
 			pms.load_directory(@modules_dir)
 		end
 
-		pms.should have(3).module
+		pms.keys.should have(3).module
 
-		pms[0].should be_a PollerModule
-		pms[0].module_name.should == :empty
-		pms[0].keys.should have(0).probes
+		pms[:empty].should be_a PollerModule
+		pms[:empty].module_name.should == :empty
+		pms[:empty].keys.should have(0).probes
 
-		pms[1].should be_a PollerModule
-		pms[1].module_name.should == :jmx
-		pms[1].should include(:gc)
+		pms[:jmx].should be_a PollerModule
+		pms[:jmx].module_name.should == :jmx
+		pms[:jmx].should include(:gc)
 
-		pms[2].should be_a PollerModule
-		pms[2].module_name.should == :system
-		pms[2].should include(:sysstat)
-		pms[2].should include(:memory)
+		pms[:system].should be_a PollerModule
+		pms[:system].module_name.should == :system
+		pms[:system].should include(:sysstat)
+		pms[:system].should include(:memory)
 
 		out.should include("WARN")
 		out.should include("loading module 'empty' from:")

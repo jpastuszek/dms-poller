@@ -49,7 +49,7 @@ class PollerModule < Hash
 	end
 end
 
-class PollerModules < Array
+class PollerModules < Hash
 	def load_directory(module_dir)
 		module_dir = Pathname.new(module_dir.to_s)
 		
@@ -70,7 +70,7 @@ class PollerModules < Array
 			else
 				log.info { "module '#{module_name}' probes: #{m.keys.map{|p| "#{p.to_s}"}.sort.join(', ')}" }
 			end
-			self << m
+			self[module_name.to_sym] = m
 		rescue => e
 			log.error "error while loading module '#{module_name}': #{e.class.name}: #{e.message}"
 		end
