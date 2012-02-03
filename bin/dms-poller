@@ -7,7 +7,7 @@ require 'dms-poller'
 
 settings = CLI.new do
 	switch :debug, :short => :d, :description => "enable debugging"
-	options :module_dir, :short => :m, :cast => Pathname, :description => 'path to directory from which poller modules will be loaded', :default => 'module.d'
+	options :module_dir, :short => :m, :cast => Pathname, :description => 'path to directory from which poller modules will be loaded', :default => Pathname.new(__FILE__).dirname + '..' + 'module.d'
 end.parse! do |settings|
 	settings.module_dir.each do |m|
 		fail "module directory does not exist: #{m}" unless m.directory?
@@ -24,5 +24,14 @@ poller_modules = PollerModules.new
 
 settings.module_dir.each do |module_dir|
 	poller_modules.load_directory(module_dir)
+end
+
+scheduler_thread = SchedulerThread.new(poller_modules)
+
+begin
+	scheduler_thread.join
+rescue Interrupt
+	log.info "interrupted, exiting."
+	exit(0)
 end
 
