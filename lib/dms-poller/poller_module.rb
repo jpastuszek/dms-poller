@@ -1,15 +1,18 @@
 require 'dms-core'
 require 'pathname'
+require 'active_support/core_ext'
 
 class PollerModule < Hash
 	class Probe
 		attr_reader :module_name
 		attr_reader :probe_name
+		attr_reader :schedule
 
 		def initialize(module_name, probe_name, &block)
 			@module_name = module_name.to_sym
 			@probe_name = probe_name.to_sym
 			@collector = block
+			@schedule = 60.0
 		end
 
 		def run
@@ -20,6 +23,11 @@ class PollerModule < Hash
 				log.error "Probe #{@module_name}/#{@probe_name} raised error: #{e.class.name}: #{e.message}"
 			end
 			@data
+		end
+
+		def schedule_every(seconds)
+			@schedule = seconds.to_f
+			self
 		end
 
 		private

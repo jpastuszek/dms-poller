@@ -2,6 +2,7 @@ source "http://rubygems.org"
 
 gem "cli", "~> 1.1.1"
 gem "periodic-scheduler", "~> 0.1.0"
+gem "i18n", ">= 0.5.0"
 gem "activesupport", "~> 3.0.0"
 
 #gem "dms-core", :git => "git@github.com:jpastuszek/dms-core.git"

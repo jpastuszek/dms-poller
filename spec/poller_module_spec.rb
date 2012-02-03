@@ -48,6 +48,21 @@ describe PollerModule do
 				data.should have(1).element
 			end.should include("Probe system/sysstat raised error: RuntimeError: test error")
 		end
+
+		it "schedule default to 60 seconds" do
+			subject.schedule.should == 60
+		end
+
+		it "can be scheduled to run every given number of seconds or minutes" do
+			subject.schedule_every 10.5
+			subject.schedule.should == 10.5
+
+			subject.schedule_every 10.seconds
+			subject.schedule.should == 10
+
+			subject.schedule_every 10.minutes
+			subject.schedule.should == 600
+		end
 	end
 
 	subject do
