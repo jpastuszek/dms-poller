@@ -212,7 +212,7 @@ EOF
 
 		out.should include("ERROR")
 		out.should include("error while loading module 'bad_module")
-		out.should include("': RuntimeError: (eval):1:in `load': test error")
+		out.should include("test error")
 	end
 
 	after :all do

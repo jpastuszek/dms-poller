@@ -11,3 +11,9 @@ $LOAD_PATH.unshift(File.dirname(__FILE__) + '/../../lib')
 require 'dms-poller'
 
 require 'rspec/expectations'
+
+def dms_poller(debug, args)
+	pid = Process.spawn("be ../bin/dms-poller #{debug ? '-d' : ''} #{args}")
+	p pid
+end
+
