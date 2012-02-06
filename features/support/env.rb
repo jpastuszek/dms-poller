@@ -12,10 +12,9 @@ require 'dms-poller'
 
 require 'rspec/expectations'
 require 'capture-output'
+require 'tmpdir'
 
-def run(program, args, debug = false)
-	args = args.split(' ').unshift('-d').join(' ') if debug
-
+def run(program, args)
 	out = []
 	out << Capture.stdout do	
 		out << Capture.stderr do	
@@ -27,4 +26,15 @@ def run(program, args, debug = false)
 	
 	out.reverse
 end
+
+def temp_dir(name)
+	dir = Pathname.new(Dir.mktmpdir(name))
+
+	at_exit do
+		dir.rmtree
+	end
+
+	dir
+end
+
 
