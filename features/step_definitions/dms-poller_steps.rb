@@ -28,6 +28,6 @@ Then /log output should not include following entries:/ do |log_entries|
 end
 
 Then /log output should include \"(.+)\" (.+)/ do |entry, times|
-	@program_log.scan(entry).size.should == times.times
+	@program_log.scan(entry).size.should == times.to_i
 end
 

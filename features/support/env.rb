@@ -28,14 +28,3 @@ def run(program, args, debug = false)
 	out.reverse
 end
 
-class String
-	def times
-		case self
-			when 'once' then 1
-			when 'three times' then 3
-		else
-			raise "unknown word '#{self}'"
-		end
-	end
-end
-

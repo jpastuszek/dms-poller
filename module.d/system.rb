@@ -7,5 +7,5 @@ probe(:memory) do
 	collect 'system', '', 'total', 8182644
 	collect 'system', '', 'free', 5577396
 	collect 'system', '', 'buffers', 254404
-end.schedule_every 60.seconds
+end.schedule_every 30.seconds
 
