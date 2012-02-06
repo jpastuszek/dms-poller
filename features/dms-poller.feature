@@ -4,18 +4,34 @@ Feature: Poller startup and testing features
   and with time scaling
 
   Scenario: Poller startup with 0 cycles
-    Given dms-poller started in debug with -c 0
-    When it exits
+	Given dms-poller program
+    When it is started in debug with arguments -c 0
 	Then exit status will be 0
-	And log output will contain
-	"""
-	DMS Poller version 
-	"""
-	And log output will contain
-	"""
-	running 0 cycles
-	"""
-	And log output will not contain
-	"""
-	running probe
-	"""
+	And log output should include following entries:
+		| Starting DMS Poller version |
+		| DMS Poller ready |
+		| running 0 cycles |
+	But log output should not include following entries:
+		| running probe |
+
+  Scenario: Poller startup with 1 cycle and time scale
+	Given dms-poller program
+    When it is started in debug with arguments -c 1 -t 0.01
+	Then exit status will be 0
+	And log output should include following entries:
+		| Starting DMS Poller version |
+		| DMS Poller ready |
+		| running 1 cycles |
+	And log output should include "running probe: system/sysstat" once
+
+
+  Scenario: Poller startup with 1 cycle and time scale
+	Given dms-poller program
+    When it is started in debug with arguments -c 3 -t 0.01
+	Then exit status will be 0
+	And log output should include following entries:
+		| Starting DMS Poller version |
+		| DMS Poller ready |
+		| running 3 cycles |
+	And log output should include "running probe: system/sysstat" three times
+

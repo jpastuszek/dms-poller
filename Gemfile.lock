@@ -11,6 +11,7 @@ GEM
   specs:
     activesupport (3.0.10)
     builder (3.0.0)
+    capture-output (1.0.0)
     cli (1.1.1)
     cucumber (1.1.4)
       builder (>= 2.1.2)
@@ -61,6 +62,7 @@ PLATFORMS
 DEPENDENCIES
   activesupport (~> 3.0.0)
   bundler (~> 1.0.0)
+  capture-output (~> 1.0.0)
   cli (~> 1.1.1)
   cucumber
   dms-core!

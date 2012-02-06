@@ -5,7 +5,10 @@ require 'cli'
 require 'pathname'
 require 'dms-poller'
 
+VERSION = (Pathname.new(__FILE__).dirname + '../VERSION').read
+
 settings = CLI.new do
+	version VERSION
 	switch	:debug,				:short => :d, :description => 'enable debugging'
 	options :module_dir,		:short => :m, :cast => Pathname, :description => 'path to directory from which poller modules are loaded', :default => Pathname.new(__FILE__).dirname + '..' + 'module.d'
 	switch	:startup_run,		:short => :s, :description => 'run all probes on startup (may cause load spike)'
@@ -22,6 +25,8 @@ end
 
 Logging.logger.root.level = :debug if settings.debug
 
+log.info "Starting DMS Poller version #{VERSION}"
+
 log.debug settings.inspect
 
 poller_modules = PollerModules.new
@@ -31,6 +36,8 @@ settings.module_dir.each do |module_dir|
 end
 
 scheduler_thread = SchedulerThread.new(poller_modules, settings.scheduler_quantum, settings.run_cycles, settings.time_scale, settings.startup_run)
+
+log.info "DMS Poller ready"
 
 begin
 	scheduler_thread.join
