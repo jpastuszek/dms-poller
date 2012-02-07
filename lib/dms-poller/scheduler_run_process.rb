@@ -2,7 +2,7 @@ class SchedulerRunProcess
 	def initialize(cycle_no, probes)
 		pid = fork do
 			probes.each_with_index do |probe, probe_no|
-				log.debug "#{cycle_no}, #{probe_no + 1}/#{probes.length}: running probe: #{probe.module_name}/#{probe.probe_name}"
+				log.debug "#{Process.pid}: #{cycle_no}, #{probe_no + 1}/#{probes.length}: running probe: #{probe.module_name}/#{probe.probe_name}"
 
 				raw_datum = probe.run
 			end

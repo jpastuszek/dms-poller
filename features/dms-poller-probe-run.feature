@@ -55,7 +55,6 @@ Feature: Poller should run probes in isolated environment
 		And last log line should include 'scheduler finished execution, exiting'
 
 
-	@test
 	Scenario: Scheduler should not allow running more than desired maximum number of processes in parallel
 		Given using poller modules directory stale
 		And scheduler run process limit of 2
