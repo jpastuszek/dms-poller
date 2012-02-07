@@ -42,9 +42,10 @@ log.info "DMS Poller ready"
 begin
 	scheduler_thread.join
 rescue Interrupt
-	log.info "interrupted, exiting."
-	exit(0)
+	log.info "interrupted, exiting..."
 end
+
+scheduler_thread.wait_run_processes
 
 log.info "scheduler finished execution, exiting."
 

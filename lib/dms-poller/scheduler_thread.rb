@@ -8,6 +8,8 @@ class SchedulerThread < Thread
 		log.info "using scheduler quantum of #{quantum} seconds"
 		log.info "running #{run_cycles} cycles" if run_cycles
 
+		@scheduler_run_process_pool = SchedulerRunProcessPool.new
+
 		@scheduler = PeriodicScheduler.new(quantum)
 		@probes = []
 
@@ -35,19 +37,14 @@ class SchedulerThread < Thread
 					end
 				end
 
-				run_probes(cycle_no, @probes)
+				@scheduler_run_process_pool.start(cycle_no, @probes)
 				@probes.clear
 			end
 		end
 	end
 
-	def run_probes(cycle_no, probes)
-		#TODO: quantum run process (fork)
-		@probes.each_with_index do |probe, probe_no|
-			log.debug "#{cycle_no}, #{probe_no + 1}/#{@probes.length}: running probe: #{probe.module_name}/#{probe.probe_name}"
-
-			raw_datum = probe.run
-		end
+	def wait_run_processes
+		@scheduler_run_process_pool.wait
 	end
 
 	private

@@ -68,7 +68,15 @@ Then /log output should not include following entries:/ do |log_entries|
 	end
 end
 
+Then /log output should not include '(.+)'/ do |entry|
+	@program_log.should_not include(entry)
+end
+
 Then /log output should include '(.+)' (.+) times/ do |entry, times|
 	@program_log.scan(entry).size.should == times.to_i
+end
+
+Then /last log line should include '(.+)'/ do |entry|
+	@program_log.lines.to_a.last.should include(entry)
 end
 
