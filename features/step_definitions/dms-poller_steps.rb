@@ -2,7 +2,7 @@ Given /poller module directory (.+) containing module (.+):/ do |module_dir, mod
 	@module_dirs ||= {}
 	module_name = module_name.to_sym
 
-	module_dir = @module_dirs[module_dir] ||= temp_dir("poller_module_#{module_name}")
+	module_dir = @module_dirs[module_dir] ||= temp_dir("poller_module_#{module_dir}")
 
 	(module_dir + "#{module_name}.rb").open('w') do |f|
 		f.write(module_content)
@@ -37,9 +37,20 @@ When /it is started with arguments (.+)/ do |args|
 	puts "#{@program} #{@program_args}"
 	@program_out, @program_log, @program_status = run(@program, @program_args)
 	#p @program_out
-	#p @program_log
+	#puts @program_log
 	#p @program_status
 end
+
+When /it is started for (.+) run cycle/ do |cycles|
+	@program_args = @program_args.join(' ') + ' ' + "--run-cycles #{cycles.to_i}"
+
+	puts "#{@program} #{@program_args}"
+	@program_out, @program_log, @program_status = run(@program, @program_args)
+	#p @program_out
+	puts @program_log
+	#p @program_status
+end
+
 
 Then /exit status will be (.+)/ do |status|
 	@program_status.exitstatus.should == status.to_i	
