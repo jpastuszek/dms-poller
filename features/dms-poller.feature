@@ -6,6 +6,7 @@ Feature: Poller startup and testing features
 	Background:
 		Given dms-poller program
 		And time scale 0.01
+		And use startup run
 		And debug enabled
 		Given poller module directory basic containing module system:
 		"""

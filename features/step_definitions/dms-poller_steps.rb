@@ -23,6 +23,10 @@ Given /time scale (.+)/ do |time_scale|
 	@program_args << ['--time-scale', time_scale]
 end
 
+Given /use startup run/ do
+	@program_args << ['--startup-run']
+end
+
 Given /debug enabled/ do
 	@program_args << ['--debug']
 end
