@@ -1,6 +1,6 @@
 Feature: Poller startup and testing features
 	In order to be able to test dms-poller program
-	It has to support running specified number of cycles
+	It has to support running specified number of scheduler runs
 	And it has to run with time scaling so that test will run fast
 
 	Background:
@@ -22,20 +22,20 @@ Feature: Poller startup and testing features
 		end.schedule_every 30.seconds
 		"""
 
-	Scenario Outline: Poller run with different cycle count
+	Scenario Outline: Poller run with different runs count
 		Given using poller modules directory basic
-		When it is started with arguments --run-cycles <cycles>
+		When it is started with arguments --runs <runs>
 		Then exit status will be 0
 		And log output should include following entries:
 			| Starting DMS Poller version |
 			| DMS Poller ready |
-			| running <cycles> cycles |
+			| running <runs> runs |
 		And log output should include '<log line>' <times> times
 
 		Examples:
-			| cycles	| log line						| times	|
-			| 0			| running probe: system/sysstat | 0		|
-			| 1			| running probe: system/sysstat | 1		|
-			| 3			| running probe: system/sysstat | 3		|
-			| 3			| running probe: system/memory	| 1		|
+			| runs	| log line						| times	|
+			| 0		| running probe: system/sysstat | 0		|
+			| 1		| running probe: system/sysstat | 1		|
+			| 3		| running probe: system/sysstat | 3		|
+			| 3		| running probe: system/memory	| 1		|
 

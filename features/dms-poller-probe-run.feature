@@ -34,21 +34,21 @@ Feature: Poller should run probes in isolated environment
 
 	Scenario: It should not crash on errors from probes and should log them
 		Given using poller modules directory broken
-		When it is started for 3 run cycle
+		When it is started for 3 runs
 		Then exit status will be 0
 		And log output should include 'running probe: system/sysstat' 3 times
 		And log output should include 'Probe system/sysstat raised error: RuntimeError: test error' 3 times
 
 	Scenario: It should wait all running probes to finish before exiting
 		Given using poller modules directory slow
-		When it is started for 2 run cycle
+		When it is started for 2 runs
 		Then exit status will be 0
 		And log output should include 'running probe: system/sysstat' 2 times
 		And last log line should include 'scheduler finished execution, exiting'
 
 	Scenario: Slow running probe should not delay the scheduler
 		Given using poller modules directory slow
-		When it is started for 2 run cycle
+		When it is started for 2 runs
 		Then exit status will be 0
 		And log output should include 'running probe: system/sysstat' 2 times
 		But log output should not include 'missed schedule'
@@ -57,7 +57,7 @@ Feature: Poller should run probes in isolated environment
 	Scenario: Scheduler should not allow running more than desired maximum number of processes in parallel
 		Given using poller modules directory stale
 		And scheduler run process limit of 2
-		When it is started for 4 run cycle
+		When it is started for 4 runs
 		Then exit status will be 0
 		And log output should include 'running probe: system/sysstat' 2 times
 		And log output should include 'maximum number of scheduler run processes reached' 2 times
@@ -68,7 +68,7 @@ Feature: Poller should run probes in isolated environment
 	Scenario: Scheduler run process should time-out its execution after specified maximum time
 		Given using poller modules directory stale
 		And scheduler run process time-out of 0.5 seconds
-		When it is started for 2 run cycle
+		When it is started for 2 runs
 		Then exit status will be 0
 		And log output should include 'running probe: system/sysstat' 2 times
 		And log output should include 'scheduler run process execution timed-out with limit of 0.5 seconds' 2 times

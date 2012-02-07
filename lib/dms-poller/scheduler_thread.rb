@@ -1,14 +1,14 @@
 require 'periodic-scheduler'
 
 class SchedulerThread < Thread
-	def initialize(poller_modules, quantum = 1, run_cycles = nil, time_scale = 1.0, startup_run = false, process_limit = 8, process_time_out = 120.0)
+	def initialize(poller_modules, quantum = 1, runs = nil, time_scale = 1.0, startup_run = false, process_limit = 8, process_time_out = 120.0)
 		quantum *= time_scale
 
 		log.info "using scheduler quantum of #{quantum} seconds"
 		log.info "scheduler run process limit set to #{process_limit}"
 		log.info "scheduler run process time-out after #{process_time_out} seconds"
 		log.warn "using time scale of #{time_scale}" if time_scale != 1.0
-		log.info "running #{run_cycles} cycles" if run_cycles
+		log.info "running #{runs} runs" if runs
 
 		@scheduler_run_process_pool = SchedulerRunProcessPool.new(process_limit)
 
@@ -31,7 +31,7 @@ class SchedulerThread < Thread
 		super do
 			abort_on_exception = true
 
-			cycle(run_cycles) do |cycle_no|
+			cycle(runs) do |run_no|
 				if @probes.empty? # skip for startup run
 					errors = @scheduler.run
 					errors.each do |error|
@@ -40,7 +40,7 @@ class SchedulerThread < Thread
 				end
 
 				begin
-					@scheduler_run_process_pool.start(cycle_no, @probes, process_time_out)
+					@scheduler_run_process_pool.start(run_no, @probes, process_time_out)
 				rescue SchedulerRunProcessPool::ProcessLimitReachedError => e
 					log.warn "#{e.message}"
 				end
@@ -55,11 +55,11 @@ class SchedulerThread < Thread
 
 	private
 
-	def cycle(times = nil)
-		cycle_no = 1
-		until times and cycle_no > times
-			yield cycle_no
-			cycle_no += 1
+	def cycle(runs = nil)
+		run_no = 1
+		until runs and run_no > runs
+			yield run_no
+			run_no += 1
 		end
 	end
 end

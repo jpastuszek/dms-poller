@@ -49,8 +49,8 @@ When /it is started with arguments (.+)/ do |args|
 	#p @program_status
 end
 
-When /it is started for (.+) run cycle/ do |cycles|
-	@program_args = @program_args.join(' ') + ' ' + "--run-cycles #{cycles.to_i}"
+When /it is started for (.+) runs/ do |runs|
+	@program_args = @program_args.join(' ') + ' ' + "--runs #{runs.to_i}"
 
 	puts "#{@program} #{@program_args}"
 	@program_out, @program_log, @program_status = run(@program, @program_args)

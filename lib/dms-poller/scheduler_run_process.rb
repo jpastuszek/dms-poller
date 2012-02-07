@@ -1,9 +1,9 @@
 require 'timeout'
 
 class SchedulerRunProcess
-	def initialize(cycle_no, probes, process_time_out)
+	def initialize(run_no, probes, process_time_out)
 		pid = fork do
-			logging_context("#{cycle_no}|#{Process.pid}")
+			logging_context("#{run_no}|#{Process.pid}")
 			begin
 				Timeout::timeout(process_time_out) do
 					probes.each_with_index do |probe, probe_no|
@@ -47,12 +47,12 @@ class SchedulerRunProcessPool
 		@processes = []
 	end
 
-	def start(cycle_no, probes, process_time_out)
+	def start(run_no, probes, process_time_out)
 		cleanup
 
 		raise ProcessLimitReachedError.new(@process_limit, pids) if @processes.length >= @process_limit
 
-		@processes << SchedulerRunProcess.new(cycle_no, probes, process_time_out)
+		@processes << SchedulerRunProcess.new(run_no, probes, process_time_out)
 	end
 
 	def wait
