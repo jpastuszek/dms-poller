@@ -8,6 +8,7 @@ require 'dms-poller'
 VERSION = (Pathname.new(__FILE__).dirname + '../VERSION').read
 
 settings = CLI.new do
+	description "DMS data collection agent"
 	version VERSION
 	switch	:debug,							:short => :d, :description => 'enable debugging'
 	options :module_dir,				:short => :m, :cast => Pathname, :description => 'path to directory from which poller modules are loaded', :default => Pathname.new(__FILE__).dirname + '..' + 'module.d'
