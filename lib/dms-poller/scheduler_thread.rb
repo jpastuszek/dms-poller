@@ -1,14 +1,14 @@
 require 'periodic-scheduler'
 
 class SchedulerThread < Thread
-	def initialize(poller_modules, quantum = 1, run_cycles = nil, time_scale = 1.0, startup_run = false)
+	def initialize(poller_modules, quantum = 1, run_cycles = nil, time_scale = 1.0, startup_run = false, process_limit = 8)
 		quantum *= time_scale
 
 		log.warn "using time scale of #{time_scale}" if time_scale != 1.0
 		log.info "using scheduler quantum of #{quantum} seconds"
 		log.info "running #{run_cycles} cycles" if run_cycles
 
-		@scheduler_run_process_pool = SchedulerRunProcessPool.new
+		@scheduler_run_process_pool = SchedulerRunProcessPool.new(process_limit)
 
 		@scheduler = PeriodicScheduler.new(quantum)
 		@probes = []
@@ -37,7 +37,11 @@ class SchedulerThread < Thread
 					end
 				end
 
-				@scheduler_run_process_pool.start(cycle_no, @probes)
+				begin
+					@scheduler_run_process_pool.start(cycle_no, @probes)
+				rescue SchedulerRunProcessPool::ProcessLimitReachedError => e
+					log.warn "#{e.message}"
+				end
 				@probes.clear
 			end
 		end

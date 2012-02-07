@@ -31,6 +31,10 @@ Given /debug enabled/ do
 	@program_args << ['--debug']
 end
 
+Given /scheduler run process limit of (.+)/ do |limit|
+	@program_args << ['--process-limit', limit.to_i]
+end
+
 When /it is started with arguments (.+)/ do |args|
 	@program_args = @program_args.join(' ') + ' ' + args
 

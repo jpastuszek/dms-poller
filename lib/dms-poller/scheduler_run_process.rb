@@ -26,12 +26,21 @@ class SchedulerRunProcess
 end
 
 class SchedulerRunProcessPool
-	def initialize
+	class ProcessLimitReachedError < RuntimeError
+		def initialize(process_limit, pids)
+			super "maximum number of scheduler run processes reached: limit: #{process_limit}: running process pids: #{pids.join(', ')}"
+		end
+	end
+
+	def initialize(process_limit)
+		@process_limit = process_limit
 		@processes = []
 	end
 
 	def start(cycle_no, probes)
 		cleanup
+
+		raise ProcessLimitReachedError.new(@process_limit, pids) if @processes.length >= @process_limit
 
 		@processes << SchedulerRunProcess.new(cycle_no, probes)
 	end
@@ -39,13 +48,17 @@ class SchedulerRunProcessPool
 	def wait
 		cleanup
 
-		log.info "awaiting for #{@processes.length} scheduler run processes to finish, pids: #{@processes.map{|p| p.pid}.join(', ')}" unless @processes.empty?
+		log.info "awaiting for #{@processes.length} scheduler run processes to finish, pids: #{pids.join(', ')}" unless @processes.empty?
 		@processes.each do |process|
 			process.join
 		end
 	end
 
 	private
+
+	def pids
+		@processes.map{|p| p.pid}
+	end
 
 	def cleanup
 		@processes.delete_if{|process| not process.running?}
