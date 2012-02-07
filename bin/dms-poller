@@ -13,6 +13,7 @@ settings = CLI.new do
 	options :module_dir,				:short => :m, :cast => Pathname, :description => 'path to directory from which poller modules are loaded', :default => Pathname.new(__FILE__).dirname + '..' + 'module.d'
 	switch	:startup_run,				:short => :s, :description => 'run all probes on startup (may cause load spike)'
 	option	:process_limit,			:short => :l, :cast => Integer, :description => 'maximum number of scheduler run processes that can run in parallel', :default => 8
+	option	:process_time_out,	:short => :o, :cast => Float, :description => 'maximum number of seconds that a scheduler run process can run', :default => 120
 	option	:scheduler_quantum,	:short => :q, :cast => Float, :description => 'minimal time between scheduler runs in seconds', :default => 1.0
 	option	:run_cycles,				:short => :c, :cast => Integer, :description => 'run specific number of scheduler run cycles and exit (useful for testing)'
 	option	:time_scale,				:short => :t, :cast => Float, :description => 'scheduling time scale - 0.1 is 10x faster (useful for testing)', :default => 1.0
@@ -42,7 +43,8 @@ scheduler_thread = SchedulerThread.new(
 	settings.run_cycles, 
 	settings.time_scale, 
 	settings.startup_run, 
-	settings.process_limit
+	settings.process_limit,
+	settings.process_time_out
 )
 
 log.info "DMS Poller ready"

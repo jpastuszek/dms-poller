@@ -1,10 +1,19 @@
-class SchedulerRunProcess
-	def initialize(cycle_no, probes)
-		pid = fork do
-			probes.each_with_index do |probe, probe_no|
-				log.debug "#{Process.pid}: #{cycle_no}, #{probe_no + 1}/#{probes.length}: running probe: #{probe.module_name}/#{probe.probe_name}"
+require 'timeout'
 
-				raw_datum = probe.run
+class SchedulerRunProcess
+	def initialize(cycle_no, probes, process_time_out)
+		pid = fork do
+			begin
+				Timeout::timeout(process_time_out) do
+					probes.each_with_index do |probe, probe_no|
+						log.debug "#{Process.pid}: #{cycle_no}, #{probe_no + 1}/#{probes.length}: running probe: #{probe.module_name}/#{probe.probe_name}"
+
+						raw_datum = probe.run
+					end
+				end
+			rescue Timeout::Error
+				log.error "#{Process.pid}: scheduler run process execution timed-out with limit of #{process_time_out} seconds"
+				exit!(1)
 			end
 
 			exit!(0)
@@ -37,12 +46,12 @@ class SchedulerRunProcessPool
 		@processes = []
 	end
 
-	def start(cycle_no, probes)
+	def start(cycle_no, probes, process_time_out)
 		cleanup
 
 		raise ProcessLimitReachedError.new(@process_limit, pids) if @processes.length >= @process_limit
 
-		@processes << SchedulerRunProcess.new(cycle_no, probes)
+		@processes << SchedulerRunProcess.new(cycle_no, probes, process_time_out)
 	end
 
 	def wait

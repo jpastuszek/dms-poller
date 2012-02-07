@@ -35,6 +35,10 @@ Given /scheduler run process limit of (.+)/ do |limit|
 	@program_args << ['--process-limit', limit.to_i]
 end
 
+Given /scheduler run process time-out of (.+)/ do |timeout|
+	@program_args << ['--process-time-out', timeout.to_f]
+end
+
 When /it is started with arguments (.+)/ do |args|
 	@program_args = @program_args.join(' ') + ' ' + args
 
