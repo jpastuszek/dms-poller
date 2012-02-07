@@ -3,16 +3,17 @@ require 'timeout'
 class SchedulerRunProcess
 	def initialize(cycle_no, probes, process_time_out)
 		pid = fork do
+			logging_context("#{cycle_no}|#{Process.pid}")
 			begin
 				Timeout::timeout(process_time_out) do
 					probes.each_with_index do |probe, probe_no|
-						log.debug "#{Process.pid}: #{cycle_no}, #{probe_no + 1}/#{probes.length}: running probe: #{probe.module_name}/#{probe.probe_name}"
+						log.debug "running probe: #{probe.module_name}/#{probe.probe_name} (#{probe_no + 1}/#{probes.length})"
 
 						raw_datum = probe.run
 					end
 				end
 			rescue Timeout::Error
-				log.error "#{Process.pid}: scheduler run process execution timed-out with limit of #{process_time_out} seconds"
+				log.error "scheduler run process execution timed-out with limit of #{process_time_out} seconds"
 				exit!(1)
 			end
 
