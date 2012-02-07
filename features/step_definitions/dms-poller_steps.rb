@@ -39,16 +39,6 @@ Given /scheduler run process time-out of (.+)/ do |timeout|
 	@program_args << ['--process-time-out', timeout.to_f]
 end
 
-When /it is started with arguments (.+)/ do |args|
-	@program_args = @program_args.join(' ') + ' ' + args
-
-	puts "#{@program} #{@program_args}"
-	@program_out, @program_log, @program_status = run(@program, @program_args)
-	#p @program_out
-	#puts @program_log
-	#p @program_status
-end
-
 When /it is started for (.+) runs/ do |runs|
 	@program_args = @program_args.join(' ') + ' ' + "--runs #{runs.to_i}"
 

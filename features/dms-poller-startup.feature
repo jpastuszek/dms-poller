@@ -24,7 +24,7 @@ Feature: Poller startup and testing features
 
 	Scenario Outline: Poller run with different runs count
 		Given using poller modules directory basic
-		When it is started with arguments --runs <runs>
+		When it is started for <runs> runs
 		Then exit status will be 0
 		And log output should include following entries:
 			| Starting DMS Poller version |
