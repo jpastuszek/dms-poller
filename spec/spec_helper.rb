@@ -11,6 +11,8 @@ RSpec.configure do |config|
   
 end
 
+require 'capture-output'
+
 def stderr_read
 	r, w = IO.pipe
 	old_stdout = STDERR.clone

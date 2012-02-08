@@ -63,7 +63,6 @@ rescue Interrupt
 	log.info "interrupted, exiting..."
 end
 
-scheduler_thread.wait_run_processes
 collector_thread.terminate
 collector_thread.join
 

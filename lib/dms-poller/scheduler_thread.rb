@@ -10,47 +10,64 @@ class SchedulerThread < Thread
 		log.warn "using time scale of #{time_scale}" if time_scale != 1.0
 		log.info "running #{runs} runs" if runs
 
-		@scheduler_run_process_pool = SchedulerRunProcessPool.new(process_limit)
+		probes = []
+		scheduler = PeriodicScheduler.new(quantum)
 
-		@scheduler = PeriodicScheduler.new(quantum)
-		@probes = []
-
+		# program scheduler
 		poller_modules.each_pair do |poller_module_name, poller_module|
 			poller_module.each_pair do |probe_name, probe|
 				schedule = probe.schedule * time_scale 
 
 				log.info "scheduling probe #{poller_module_name}/#{probe_name} to run every #{schedule} seconds"
 
-				@probes << probe if startup_run
-				@scheduler.schedule(schedule, true) do
-					@probes << probe
+				probes << probe if startup_run
+				scheduler.schedule(schedule, true) do
+					# collect probes
+					probes << probe
 				end
 			end
 		end
 
+		# start thread
 		super do
 			abort_on_exception = true
 
-			cycle(runs) do |run_no|
-				if @probes.empty? # skip for startup run
-					errors = @scheduler.run
-					errors.each do |error|
-						log.error "scheduler runtime error: #{error.class.name}: #{error.message}"
+			ProcessPool.new(process_limit) do |process_pool|
+				cycle(runs) do |run_no|
+					if probes.empty? # skip for startup run
+						# run the scheduler
+						scheduler.run.each do |error|
+							log.error "scheduler runtime error: #{error.class.name}: #{error.message}"
+						end
 					end
-				end
 
-				begin
-					@scheduler_run_process_pool.start(run_no, @probes, collector_bind_address, process_time_out)
-				rescue SchedulerRunProcessPool::ProcessLimitReachedError => e
-					log.warn "#{e.message}"
+					begin
+						process_pool.process(process_time_out) do |process|
+							process.on_timeout do |time_out|
+								log.fatal "scheduler run process execution timed-out with limit of #{time_out} seconds"
+							end
+							logging_context("#{run_no}|#{Process.pid}")
+
+							ZeroMQ.new do |zmq|
+								zmq.push_connect(collector_bind_address) do |collector|
+									probes.each_with_index do |probe, probe_no|
+										log.debug "running probe: #{probe.module_name}/#{probe.probe_name} (#{probe_no + 1}/#{probes.length})"
+
+										probe.run.each do |raw_datum|
+											collector.send raw_datum
+										end
+									end
+								end
+							end
+						end
+					rescue ProcessPool::ProcessLimitReachedError => e
+						log.warn "maximum number of scheduler run processes reached: limit: #{e.process_limit}: running pids: #{e.running_pids}"
+					end
+
+					probes.clear
 				end
-				@probes.clear
 			end
 		end
-	end
-
-	def wait_run_processes
-		@scheduler_run_process_pool.wait
 	end
 
 	private
