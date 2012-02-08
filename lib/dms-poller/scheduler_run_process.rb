@@ -1,15 +1,15 @@
 require 'timeout'
 
 class SchedulerRunProcess
-	def initialize(run_no, probes, process_time_out)
-		pid = fork do
+	def initialize(run_no, probes, collector_bind_address, process_time_out)
+		@pid = fork do
 			logging_context("#{run_no}|#{Process.pid}")
 			begin
 				Timeout::timeout(process_time_out) do
-					probes.each_with_index do |probe, probe_no|
-						log.debug "running probe: #{probe.module_name}/#{probe.probe_name} (#{probe_no + 1}/#{probes.length})"
-
-						raw_datum = probe.run
+					ZeroMQ.new do |zmq|
+						zmq.push_connect(collector_bind_address) do |collector|
+							process_probes(probes, collector)
+						end
 					end
 				end
 			rescue Timeout::Error
@@ -20,8 +20,7 @@ class SchedulerRunProcess
 			exit!(0)
 		end
 
-		@pid = pid
-		@thread = Process.detach(pid)
+		@thread = Process.detach(@pid)
 	end
 
 	attr_reader :pid
@@ -32,6 +31,18 @@ class SchedulerRunProcess
 
 	def running?
 		@thread.alive?
+	end
+
+	private
+
+	def process_probes(probes, collector)
+		probes.each_with_index do |probe, probe_no|
+			log.debug "running probe: #{probe.module_name}/#{probe.probe_name} (#{probe_no + 1}/#{probes.length})"
+
+			probe.run.each do |raw_datum|
+				collector.send raw_datum
+			end
+		end
 	end
 end
 
@@ -47,12 +58,12 @@ class SchedulerRunProcessPool
 		@processes = []
 	end
 
-	def start(run_no, probes, process_time_out)
+	def start(run_no, probes, collector_bind_address, process_time_out)
 		cleanup
 
 		raise ProcessLimitReachedError.new(@process_limit, pids) if @processes.length >= @process_limit
 
-		@processes << SchedulerRunProcess.new(run_no, probes, process_time_out)
+		@processes << SchedulerRunProcess.new(run_no, probes, collector_bind_address, process_time_out)
 	end
 
 	def wait

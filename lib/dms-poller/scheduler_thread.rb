@@ -1,7 +1,7 @@
 require 'periodic-scheduler'
 
 class SchedulerThread < Thread
-	def initialize(poller_modules, quantum = 1, runs = nil, time_scale = 1.0, startup_run = false, process_limit = 8, process_time_out = 120.0)
+	def initialize(poller_modules, collector_bind_address, quantum = 1, runs = nil, time_scale = 1.0, startup_run = false, process_limit = 8, process_time_out = 120.0)
 		quantum *= time_scale
 
 		log.info "using scheduler quantum of #{quantum} seconds"
@@ -40,7 +40,7 @@ class SchedulerThread < Thread
 				end
 
 				begin
-					@scheduler_run_process_pool.start(run_no, @probes, process_time_out)
+					@scheduler_run_process_pool.start(run_no, @probes, collector_bind_address, process_time_out)
 				rescue SchedulerRunProcessPool::ProcessLimitReachedError => e
 					log.warn "#{e.message}"
 				end

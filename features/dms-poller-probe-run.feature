@@ -64,7 +64,6 @@ Feature: Poller should run probes in isolated environment
 		But log output should not include 'missed schedule'
 		And last log line should include 'scheduler finished execution, exiting'
 
-	@test
 	Scenario: Scheduler run process should time-out its execution after specified maximum time
 		Given using poller modules directory stale
 		And scheduler run process time-out of 0.5 seconds

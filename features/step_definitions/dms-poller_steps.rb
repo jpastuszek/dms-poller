@@ -39,6 +39,10 @@ Given /scheduler run process time-out of (.+)/ do |timeout|
 	@program_args << ['--process-time-out', timeout.to_f]
 end
 
+And /bind collector at (.+)/ do |bind_address|
+	@program_args << ['--collector-bind-address', bind_address]
+end
+
 When /it is started for (.+) runs/ do |runs|
 	@program_args = @program_args.join(' ') + ' ' + "--runs #{runs.to_i}"
 
@@ -70,7 +74,7 @@ Then /log output should not include '(.+)'/ do |entry|
 	@program_log.should_not include(entry)
 end
 
-Then /log output should include '(.+)' (.+) times/ do |entry, times|
+Then /log output should include '(.+)' (.+) time/ do |entry, times|
 	@program_log.scan(entry).size.should == times.to_i
 end
 
