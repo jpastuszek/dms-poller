@@ -47,9 +47,9 @@ log.info "Starting scheduler thread"
 scheduler_thread = SchedulerThread.new(
 	poller_modules, 
 	settings.collector_bind_address,
-	settings.scheduler_quantum, 
-	settings.runs, 
+	settings.scheduler_quantum * settings.time_scale, 
 	settings.time_scale, 
+	settings.runs, 
 	settings.startup_run, 
 	settings.process_limit,
 	settings.process_time_out

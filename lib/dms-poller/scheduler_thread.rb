@@ -1,10 +1,7 @@
 require 'periodic-scheduler'
 
 class SchedulerThread < Thread
-	def initialize(poller_modules, collector_bind_address, quantum = 1, runs = nil, time_scale = 1.0, startup_run = false, process_limit = 8, process_time_out = 120.0)
-		# auto scale quantum
-		quantum *= time_scale
-
+	def initialize(poller_modules, collector_bind_address, quantum, time_scale, runs, startup_run, process_limit, process_time_out)
 		log.info "using scheduler quantum of #{quantum} seconds"
 		log.info "scheduler run process limit set to #{process_limit}"
 		log.info "scheduler run process time-out after #{process_time_out} seconds"
