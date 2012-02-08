@@ -60,11 +60,11 @@ log.info "DMS Poller ready"
 begin
 	scheduler_thread.join
 rescue Interrupt
-	log.info "interrupted, exiting..."
+	log.info "interrupted, shutting down..."
 end
 
 collector_thread.terminate
 collector_thread.join
 
-log.info "scheduler finished execution, exiting."
+log.info "dms-poller done"
 

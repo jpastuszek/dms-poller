@@ -32,6 +32,11 @@ class SchedulerThread < Thread
 						log.warn "maximum number of scheduler run processes reached: limit: #{e.process_limit}: running pids: #{e.running_pids}"
 					end
 				end
+
+				log.info "scheduler finished #{runs} runs, shutting down..."
+
+				pids = process_pool.running_pids
+				log.info "watining for #{pids.length} scheduler run processes to finish: pids: #{pids.join(', ')}" unless pids.empty?
 			end
 		end
 	end
