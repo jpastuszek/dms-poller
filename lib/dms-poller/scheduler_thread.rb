@@ -10,7 +10,7 @@ class SchedulerThread < Thread
 		log.warn "using time scale of #{time_scale}" if time_scale != 1.0
 		log.info "running #{runs} runs" if runs
 
-		probes = []
+		all_probes = []
 		scheduler = PeriodicScheduler.new(quantum)
 
 		# program scheduler
@@ -20,11 +20,11 @@ class SchedulerThread < Thread
 
 				log.info "scheduling probe #{poller_module_name}/#{probe_name} to run every #{schedule} seconds"
 
-				probes << probe if startup_run
 				scheduler.schedule(schedule, true) do
-					# collect probes
-					probes << probe
+					probe
 				end
+
+				all_probes << probe
 			end
 		end
 
@@ -34,9 +34,10 @@ class SchedulerThread < Thread
 
 			ProcessPool.new(process_limit) do |process_pool|
 				cycle(runs) do |run_no|
-					if probes.empty? # skip for startup run
-						# run the scheduler
-						scheduler.run.each do |error|
+					probes = if startup_run and run_no == 1
+						all_probes	
+					else
+						scheduler.run do |error|
 							log.error "scheduler runtime error: #{error.class.name}: #{error.message}"
 						end
 					end
@@ -63,8 +64,6 @@ class SchedulerThread < Thread
 					rescue ProcessPool::ProcessLimitReachedError => e
 						log.warn "maximum number of scheduler run processes reached: limit: #{e.process_limit}: running pids: #{e.running_pids}"
 					end
-
-					probes.clear
 				end
 			end
 		end
