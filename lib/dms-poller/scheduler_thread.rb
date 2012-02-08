@@ -2,6 +2,7 @@ require 'periodic-scheduler'
 
 class SchedulerThread < Thread
 	def initialize(poller_modules, collector_bind_address, quantum = 1, runs = nil, time_scale = 1.0, startup_run = false, process_limit = 8, process_time_out = 120.0)
+		# auto scale quantum
 		quantum *= time_scale
 
 		log.info "using scheduler quantum of #{quantum} seconds"
@@ -10,36 +11,12 @@ class SchedulerThread < Thread
 		log.warn "using time scale of #{time_scale}" if time_scale != 1.0
 		log.info "running #{runs} runs" if runs
 
-		all_probes = []
-		scheduler = PeriodicScheduler.new(quantum)
-
-		# program scheduler
-		poller_modules.each_pair do |poller_module_name, poller_module|
-			poller_module.each_pair do |probe_name, probe|
-				all_probes << probe
-
-				schedule = probe.schedule * time_scale 
-				log.info "scheduling probe #{poller_module_name}/#{probe_name} to run every #{schedule} seconds"
-				scheduler.schedule(schedule, true) do
-					probe
-				end
-			end
-		end
-
 		# start thread
 		super do
 			abort_on_exception = true
 
 			ProcessPool.new(process_limit) do |process_pool|
-				cycle(runs) do |run_no|
-					probes = if startup_run and run_no == 1
-						all_probes	
-					else
-						scheduler.run do |error|
-							log.error "scheduler runtime error: #{error.class.name}: #{error.message}"
-						end
-					end
-
+				probe_scheduler(poller_modules, quantum, time_scale, runs, startup_run) do |probes, run_no|
 					begin
 						# fork process
 						process_pool.process(process_time_out) do |process|
@@ -62,7 +39,35 @@ class SchedulerThread < Thread
 		end
 	end
 
-	private
+	def probe_scheduler(poller_modules, quantum, time_scale, runs, startup_run)
+		all_probes = []
+		scheduler = PeriodicScheduler.new(quantum)
+
+		# program scheduler
+		poller_modules.each_pair do |poller_module_name, poller_module|
+			poller_module.each_pair do |probe_name, probe|
+				all_probes << probe
+
+				schedule = probe.schedule * time_scale 
+				log.info "scheduling probe #{poller_module_name}/#{probe_name} to run every #{schedule} seconds"
+				scheduler.schedule(schedule, true) do
+					probe
+				end
+			end
+		end
+
+		cycle(runs) do |run_no|
+			probes = if startup_run and run_no == 1
+				all_probes	
+			else
+				scheduler.run do |error|
+					log.error "scheduler runtime error: #{error.class.name}: #{error.message}"
+				end
+			end
+
+			yield probes, run_no
+		end
+	end
 
 	def cycle(runs = nil)
 		run_no = 1
