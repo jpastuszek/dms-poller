@@ -41,21 +41,16 @@ class SchedulerThread < Thread
 					end
 
 					begin
+						# fork process
 						process_pool.process(process_time_out) do |process|
 							process.on_timeout do |time_out|
 								log.fatal "scheduler run process execution timed-out with limit of #{time_out} seconds"
 							end
 							logging_context("#{run_no}|#{Process.pid}")
 
-							ZeroMQ.new do |zmq|
-								zmq.push_connect(collector_bind_address) do |collector|
-									probes.each_with_index do |probe, probe_no|
-										log.debug "running probe: #{probe.module_name}/#{probe.probe_name} (#{probe_no + 1}/#{probes.length})"
-
-										probe.run.each do |raw_datum|
-											collector.send raw_datum
-										end
-									end
+							bind_collector(collector_bind_address) do |collector|
+								run_probes(probes, run_no) do |raw_datum|
+									collector.send raw_datum
 								end
 							end
 						end
@@ -74,6 +69,24 @@ class SchedulerThread < Thread
 		until runs and run_no > runs
 			yield run_no
 			run_no += 1
+		end
+	end
+
+	def bind_collector(bind_address)
+		ZeroMQ.new do |zmq|
+			zmq.push_connect(bind_address) do |collector|
+				yield collector
+			end
+		end
+	end
+
+	def run_probes(probes, run_no)
+		probes.each_with_index do |probe, probe_no|
+			log.debug "running probe: #{probe.module_name}/#{probe.probe_name} (#{probe_no + 1}/#{probes.length})"
+
+			probe.run.each do |raw_datum|
+				yield raw_datum
+			end
 		end
 	end
 end
