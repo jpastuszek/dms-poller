@@ -43,7 +43,7 @@ describe PollerModule do
 				collect 'system', 'process', 'blocked', 0
 			end
 
-			stderr_read do
+			Capture.stderr do
 				data = p.run
 				data.should have(1).element
 			end.should include("Probe system/sysstat raised error: RuntimeError: test error")
@@ -135,7 +135,7 @@ EOF
 	it "should load module from file and log that" do
 		pms = PollerModules.new
 		
-		out = stderr_read do
+		out = Capture.stderr do
 			pms.load_file(@modules_dir + 'system.rb')
 		end
 
@@ -153,7 +153,7 @@ EOF
 	it "should log warning message if loaded file has no probe definitions" do
 		pms = PollerModules.new
 		
-		out = stderr_read do
+		out = Capture.stderr do
 			pms.load_file(@modules_dir + 'empty.rb')
 		end
 
@@ -167,7 +167,7 @@ EOF
 	it "should load directory in alphabetical order and log that" do
 		pms = PollerModules.new
 		
-		out = stderr_read do
+		out = Capture.stderr do
 			pms.load_directory(@modules_dir)
 		end
 
@@ -204,7 +204,7 @@ EOF
 
 		pms = PollerModules.new
 		
-		out = stderr_read do
+		out = Capture.stderr do
 			pms.load_file(module_file.path)
 		end
 
