@@ -16,15 +16,13 @@ class SchedulerThread < Thread
 		# program scheduler
 		poller_modules.each_pair do |poller_module_name, poller_module|
 			poller_module.each_pair do |probe_name, probe|
+				all_probes << probe
+
 				schedule = probe.schedule * time_scale 
-
 				log.info "scheduling probe #{poller_module_name}/#{probe_name} to run every #{schedule} seconds"
-
 				scheduler.schedule(schedule, true) do
 					probe
 				end
-
-				all_probes << probe
 			end
 		end
 
