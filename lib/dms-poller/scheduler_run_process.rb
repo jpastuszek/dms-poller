@@ -58,7 +58,7 @@ class SchedulerRunProcessPool
 	def wait
 		cleanup
 
-		log.info "awaiting for #{@processes.length} scheduler run processes to finish, pids: #{pids.join(', ')}" unless @processes.empty?
+		log.info "waiting for #{@processes.length} scheduler run processes to finish, pids: #{pids.join(', ')}" unless @processes.empty?
 		@processes.each do |process|
 			process.join
 		end
