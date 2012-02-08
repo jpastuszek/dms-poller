@@ -21,39 +21,65 @@ describe ProcessPool do
 			process.should_not be_running
 			process.exitstatus.should == 42
 		end
-	end
 
-	it "should exit with status 201 when specified time-out time has passed" do
-		process = nil
+		it "should exit with status 200 when uncought excaption was raised" do
+			process = nil
 
-		ProcessPool.new do |process_pool|
-			process = process_pool.process(0.05) do
-				sleep 100
-			end
-
-			process.pid.should > 0
-			process.running?.should == true
-		end
-
-		process.running?.should == false
-		process.exitstatus.should == 201
-	end
-
-	it "should call on_timeout block with time-out value when time-out time has passed" do
-		process = nil
-
-		Capture.stdout do
 			ProcessPool.new do |process_pool|
-				process = process_pool.process(0.05) do |process|
-					process.on_timeout do |timeout|
-						puts "time-out after #{timeout} seconds!"
-					end
-					sleep 100
+				process = process_pool.process(0.05) do
+					raise 'test'
 				end
 			end
 
+			process.running?.should == false
+			process.exitstatus.should == 200
+		end
+
+		it "should exit with status 201 when specified time-out time has passed" do
+			process = nil
+
+			ProcessPool.new do |process_pool|
+				process = process_pool.process(0.05) do
+					sleep 100
+				end
+
+				process.pid.should > 0
+				process.running?.should == true
+			end
+
+			process.running?.should == false
 			process.exitstatus.should == 201
-		end.should include('time-out after 0.05 seconds!')
+		end
+
+		it "should call on_timeout block with time-out value when time-out time has passed" do
+			process = nil
+
+			Capture.stdout do
+				ProcessPool.new do |process_pool|
+					process = process_pool.process(0.05) do |process|
+						process.on_timeout do |timeout|
+							puts "time-out after #{timeout} seconds!"
+						end
+						sleep 100
+					end
+				end
+
+				process.exitstatus.should == 201
+			end.should include('time-out after 0.05 seconds!')
+		end
+
+		it "should exit with status 202 when interrupted" do
+			process = nil
+
+			ProcessPool.new do |process_pool|
+				process = process_pool.process(0.05) do
+					raise Interrupt
+				end
+			end
+
+			process.running?.should == false
+			process.exitstatus.should == 202
+		end
 	end
 
 	it "should limit maximum number of running processes" do

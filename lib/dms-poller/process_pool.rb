@@ -20,6 +20,7 @@ class ProcessPool
 			@time_out = time_out
 			@pid = fork do
 				helper = ProcessHelper.new(@time_out)
+
 				begin
 					Timeout::timeout(@time_out) do
 						yield helper
@@ -27,6 +28,10 @@ class ProcessPool
 				rescue Timeout::Error
 					helper.handle_timeout
 					exit!(201)
+				rescue Interrupt
+					exit!(202)
+				rescue => e
+					exit!(200)
 				end
 
 				exit!(0)

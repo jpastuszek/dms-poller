@@ -20,12 +20,18 @@ class SchedulerThread < Thread
 							process.on_timeout do |time_out|
 								log.fatal "scheduler run process execution timed-out with limit of #{time_out} seconds"
 							end
+							logging_class_name 'SchedulerRunProcess'
 							logging_context("#{run_no}|#{Process.pid}")
 
-							bind_collector(collector_bind_address) do |collector|
-								run_probes(probes, run_no) do |raw_datum|
-									collector.send raw_datum
+							begin
+								bind_collector(collector_bind_address) do |collector|
+									run_probes(probes, run_no) do |raw_datum|
+										collector.send raw_datum
+									end
 								end
+							rescue Interrupt
+								log.info "interrupted, exiting"
+								exit!(1)
 							end
 						end
 					rescue ProcessPool::ProcessLimitReachedError => e
