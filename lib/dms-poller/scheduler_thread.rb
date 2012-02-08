@@ -14,28 +14,12 @@ class SchedulerThread < Thread
 
 			ProcessPool.new(process_limit) do |process_pool|
 				probe_scheduler(poller_modules, quantum, time_scale, runs, startup_run) do |probes, run_no|
-					begin
-						# fork process
-						process_pool.process(process_time_out) do |process|
-							process.on_timeout do |time_out|
-								log.fatal "scheduler run process execution timed-out with limit of #{time_out} seconds"
-							end
-							logging_class_name 'SchedulerRunProcess'
-							logging_context("#{run_no}|#{Process.pid}")
-
-							begin
-								bind_collector(collector_bind_address) do |collector|
-									run_probes(probes, run_no) do |raw_datum|
-										collector.send raw_datum
-									end
-								end
-							rescue Interrupt
-								log.info "interrupted, exiting"
-								exit!(1)
+					isolate(process_pool, process_time_out, run_no) do
+						bind_collector(collector_bind_address) do |collector|
+							run_probes(probes, run_no) do |raw_datum|
+								collector.send raw_datum
 							end
 						end
-					rescue ProcessPool::ProcessLimitReachedError => e
-						log.warn "maximum number of scheduler run processes reached: limit: #{e.process_limit}: running pids: #{e.running_pids}"
 					end
 				end
 
@@ -82,6 +66,27 @@ class SchedulerThread < Thread
 		until runs and run_no > runs
 			yield run_no
 			run_no += 1
+		end
+	end
+
+	def isolate(process_pool, process_time_out, run_no)
+		begin
+			process_pool.process(process_time_out) do |process|
+				process.on_timeout do |time_out|
+					log.fatal "scheduler run process execution timed-out with limit of #{time_out} seconds"
+				end
+				logging_class_name 'SchedulerRunProcess'
+				logging_context("#{run_no}|#{Process.pid}")
+
+				begin
+					yield
+				rescue Interrupt
+					log.info "interrupted, exiting"
+					exit!(1)
+				end
+			end
+		rescue ProcessPool::ProcessLimitReachedError => e
+			log.warn "maximum number of scheduler run processes reached: limit: #{e.process_limit}: running pids: #{e.running_pids}"
 		end
 	end
 
