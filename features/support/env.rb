@@ -13,8 +13,10 @@ require 'dms-poller'
 require 'rspec/expectations'
 require 'capture-output'
 require 'tmpdir'
+require 'timeout'
+require 'socket'
 
-def run(program, args)
+def run(program, args = '')
 	out = []
 	out << Capture.stdout do	
 		out << Capture.stderr do	
@@ -25,6 +27,18 @@ def run(program, args)
 	end
 	
 	out.reverse
+end
+
+def spawn(program, args = '')
+	r, w = IO.pipe
+	pid = Process.spawn("bundle exec bin/#{program} #{args}", :out => w)
+	w.close
+
+	thread = Thread.new do
+		r.read
+	end
+
+	return pid, thread
 end
 
 def temp_dir(name)

@@ -1,6 +1,7 @@
 #!/usr/bin/ruby
 $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 
+require 'socket'
 require 'cli'
 require 'pathname'
 require 'dms-poller'
@@ -14,7 +15,9 @@ settings = CLI.new do
 	options :module_dir,				:short => :m, :cast => Pathname, :description => 'path to directory from which poller modules are loaded', :default => Pathname.new(__FILE__).dirname + '..' + 'module.d'
 	switch	:startup_run,				:short => :s, :description => 'run all probes on startup (may cause load spike)'
 	option	:collector_bind_address,	:short => :b, :description => 'ZeroMQ bind adderss of probe data collection endpoint', :default => 'ipc:///tmp/dms-poller-collector'
-	option	:process_limit,				:short => :l, :cast => Integer, :description => 'maximum number of scheduler run processes that can run in parallel', :default => 8
+	option	:data_processor_address,	:short => :p, :description => 'ZeroMQ adderss of data processor that all collected data will be pushed to', :default => 'tcp://127.0.0.1:12100'
+	option	:location,						:short => :l, :description => 'location string', :default => Socket.gethostbyname(Socket.gethostname).first
+	option	:process_limit,				:short => :L, :cast => Integer, :description => 'maximum number of scheduler run processes that can run in parallel', :default => 8
 	option	:process_time_out,			:short => :o, :cast => Float, :description => 'maximum number of seconds that a scheduler run process can run', :default => 120
 	option	:scheduler_quantum,			:short => :q, :cast => Float, :description => 'minimal time between scheduler runs in seconds', :default => 1.0
 	option	:runs,						:short => :r, :cast => Integer, :description => 'run specific number of scheduler runs and exit (useful for testing)'
@@ -41,7 +44,7 @@ settings.module_dir.each do |module_dir|
 end
 
 log.info "Starting collector thread"
-collector_thread = CollectorThread.new(settings.collector_bind_address)
+collector_thread = CollectorThread.new(settings.collector_bind_address, settings.data_processor_address, settings.location)
 
 log.info "Starting scheduler thread"
 scheduler_thread = SchedulerThread.new(

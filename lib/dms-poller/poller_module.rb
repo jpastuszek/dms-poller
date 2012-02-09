@@ -1,4 +1,3 @@
-require 'dms-core'
 require 'pathname'
 require 'active_support/core_ext'
 

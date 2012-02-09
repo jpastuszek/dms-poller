@@ -1,3 +1,30 @@
+Given /data processor stub running at (.+) that expects (.+) messages/ do |data_processor_address, message_count|
+	
+	@data_processor_stub_pid, @data_processor_stdout_thread = spawn('dms-data-processor-stub', "--bind-address #{data_processor_address} --message-count #{message_count}")
+end
+
+And /data processor will exit with (.+)/ do |status|
+	begin
+		Timeout.timeout(2) do
+			Process.waitpid(@data_processor_stub_pid)
+			$?.exitstatus.should == status.to_i	
+			@data_processor_stdout = @data_processor_stdout_thread.value
+		end
+	rescue Timeout::Error
+		Process.kill('TERM', @data_processor_stub_pid)
+		raise
+	end
+end
+
+And /data processor output should include '(.+)' (.+) time/ do |entry, times|
+	@data_processor_stdout.scan(entry).size.should == times.to_i
+end
+
+And /data processor output should include local host name (.+) time/ do |times|
+	entry = Socket.gethostbyname(Socket.gethostname).first
+	@data_processor_stdout.scan(entry).size.should == times.to_i
+end
+
 Given /poller module directory (.+) containing module (.+):/ do |module_dir, module_name, module_content|
 	@module_dirs ||= {}
 	module_name = module_name.to_sym
@@ -41,6 +68,10 @@ end
 
 And /bind collector at (.+)/ do |bind_address|
 	@program_args << ['--collector-bind-address', bind_address]
+end
+
+And /connect with data processor at (.+)/ do |data_processor_address|
+	@program_args << ['--data-processor-address', data_processor_address]
 end
 
 When /it is started for (.+) runs/ do |runs|
