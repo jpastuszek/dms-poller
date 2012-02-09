@@ -1,4 +1,3 @@
-require 'periodic-scheduler'
 require 'dms-poller/scheduler_run_process_pool'
 require 'dms-poller/probe_scheduler'
 

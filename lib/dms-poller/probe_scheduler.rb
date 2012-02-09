@@ -1,3 +1,5 @@
+require 'periodic-scheduler'
+
 class ProbeScheduler
 	def initialize(quantum, time_scale)
 		log.info "using scheduler quantum of #{quantum} seconds"
