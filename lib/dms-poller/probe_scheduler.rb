@@ -21,7 +21,7 @@ class ProbeScheduler
 		end
 	end
 
-	def run!(runs, startup_run)
+	def run!(runs, startup_run = false)
 		log.info "running #{runs} runs" if runs
 		cycle(runs) do |run_no|
 			probes = if startup_run and run_no == 1
