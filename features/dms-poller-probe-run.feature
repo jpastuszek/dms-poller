@@ -64,13 +64,14 @@ Feature: Poller should run probes in isolated environment
 		But log output should not include 'missed schedule'
 		And last log line should include 'dms-poller done'
 
+	@timeout
 	Scenario: Scheduler run process should time-out its execution after specified maximum time
 		Given using poller modules directory stale
 		And scheduler run process time-out of 0.5 seconds
 		When it is started for 2 runs
 		Then exit status will be 0
 		And log output should include 'running probe: system/sysstat' 2 times
-		And log output should include 'scheduler run process execution timed-out with limit of 0.5 seconds' 2 times
+		And log output should include 'execution timed-out with limit of 0.5 seconds' 2 times
 		But log output should not include 'missed schedule'
 		And last log line should include 'dms-poller done'
 
