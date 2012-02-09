@@ -1,19 +1,68 @@
 require 'periodic-scheduler'
 
 class SchedulerThread < Thread
+	class ProbeScheduler
+		def initialize(quantum, time_scale)
+			log.info "using scheduler quantum of #{quantum} seconds"
+			log.warn "using time scale of #{time_scale}" if time_scale != 1.0
+			@all_probes = []
+			@time_scale = time_scale
+			@scheduler = PeriodicScheduler.new(quantum)
+		end
+
+		def schedule_modules(poller_modules)
+			poller_modules.each_pair do |poller_module_name, poller_module|
+				poller_module.each_pair do |probe_name, probe|
+					@all_probes << probe
+
+					schedule = probe.schedule * @time_scale 
+					log.info "scheduling probe #{poller_module_name}/#{probe_name} to run every #{schedule} seconds"
+					@scheduler.schedule(schedule, true) do
+						probe
+					end
+				end
+			end
+		end
+
+		def run!(runs, startup_run)
+			log.info "running #{runs} runs" if runs
+			cycle(runs) do |run_no|
+				probes = if startup_run and run_no == 1
+					@all_probes	
+				else
+					@scheduler.run do |error|
+						log.error "scheduler runtime error: #{error.class.name}: #{error.message}"
+					end
+				end
+
+				yield probes, run_no
+			end
+		end
+
+		private
+
+		def cycle(runs = nil)
+			run_no = 1
+			until runs and run_no > runs
+				yield run_no
+				run_no += 1
+			end
+		end
+	end
+
 	def initialize(poller_modules, collector_bind_address, quantum, time_scale, runs, startup_run, process_limit, process_time_out)
-		log.info "using scheduler quantum of #{quantum} seconds"
 		log.info "scheduler run process limit set to #{process_limit}"
 		log.info "scheduler run process time-out after #{process_time_out} seconds"
-		log.warn "using time scale of #{time_scale}" if time_scale != 1.0
-		log.info "running #{runs} runs" if runs
+
+		probe_scheduler = ProbeScheduler.new(quantum, time_scale)
+		probe_scheduler.schedule_modules(poller_modules)
 
 		# start thread
 		super do
 			abort_on_exception = true
 
 			ProcessPool.new(process_limit) do |process_pool|
-				probe_scheduler(poller_modules, quantum, time_scale, runs, startup_run) do |probes, run_no|
+				probe_scheduler.run!(runs, startup_run) do |probes, run_no|
 					isolate(process_pool, process_time_out, run_no) do
 						bind_collector(collector_bind_address) do |collector|
 							run_probes(probes, run_no) do |raw_datum|
@@ -28,44 +77,6 @@ class SchedulerThread < Thread
 				pids = process_pool.running_pids
 				log.info "watining for #{pids.length} scheduler run processes to finish: pids: #{pids.join(', ')}" unless pids.empty?
 			end
-		end
-	end
-
-	def probe_scheduler(poller_modules, quantum, time_scale, runs, startup_run)
-		all_probes = []
-		scheduler = PeriodicScheduler.new(quantum)
-
-		# program scheduler
-		poller_modules.each_pair do |poller_module_name, poller_module|
-			poller_module.each_pair do |probe_name, probe|
-				all_probes << probe
-
-				schedule = probe.schedule * time_scale 
-				log.info "scheduling probe #{poller_module_name}/#{probe_name} to run every #{schedule} seconds"
-				scheduler.schedule(schedule, true) do
-					probe
-				end
-			end
-		end
-
-		cycle(runs) do |run_no|
-			probes = if startup_run and run_no == 1
-				all_probes	
-			else
-				scheduler.run do |error|
-					log.error "scheduler runtime error: #{error.class.name}: #{error.message}"
-				end
-			end
-
-			yield probes, run_no
-		end
-	end
-
-	def cycle(runs = nil)
-		run_no = 1
-		until runs and run_no > runs
-			yield run_no
-			run_no += 1
 		end
 	end
 
