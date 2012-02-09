@@ -10,11 +10,19 @@ class SchedulerRunProcessPool < ProcessPool
 
 		def run
 			begin
-				bind_collector do |collector|
-					run_probes do |raw_datum|
-						collector.send raw_datum
+				ZeroMQ.new do |zmq|
+					zmq.push_connect(@bind_address) do |push|
+						@probes.each_with_index do |probe, probe_no|
+							log.debug "running probe: #{probe.module_name}/#{probe.probe_name} (#{probe_no + 1}/#{@probes.length})"
+
+							probe.run.each do |raw_datum|
+								log.debug "sending #{raw_datum}"
+								push.send raw_datum
+							end
+						end
 					end
 				end
+				log.debug "done"
 			rescue => e
 				log.fatal "got error: #{e}: #{e.message}: #{e.backtrace.join("\n")}\nexiting"
 				exit!(3)
@@ -27,26 +35,6 @@ class SchedulerRunProcessPool < ProcessPool
 		def timed_out(time_out)
 			log.fatal "execution timed-out with limit of #{time_out} seconds"
 			exit!(2)
-		end
-
-		private
-
-		def bind_collector
-			ZeroMQ.new do |zmq|
-				zmq.push_connect(@bind_address) do |collector|
-					yield collector
-				end
-			end
-		end
-
-		def run_probes
-			@probes.each_with_index do |probe, probe_no|
-				log.debug "running probe: #{probe.module_name}/#{probe.probe_name} (#{probe_no + 1}/#{@probes.length})"
-
-				probe.run.each do |raw_datum|
-					yield raw_datum
-				end
-			end
 		end
 	end
 
