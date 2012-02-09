@@ -101,9 +101,16 @@ class SchedulerThread < Thread
 			end
 		end
 
-		def fork_process(probes, collector_bind_address, process_time_out, run_no)
+		def initialize(process_limit, process_time_out)
+			log.info "scheduler run process limit set to #{process_limit}"
+			log.info "scheduler run process time-out after #{process_time_out} seconds"
+			@process_time_out = process_time_out
+			super(process_limit)
+		end
+
+		def fork_process(probes, collector_bind_address, run_no)
 			begin
-				process(process_time_out) do |process|
+				process(@process_time_out) do |process|
 					scheduler_run_process = SchedulerRunProcess.new(probes, collector_bind_address, run_no)
 					process.on_timeout do |time_out|
 						scheduler_run_process.timed_out(time_out)
@@ -117,19 +124,15 @@ class SchedulerThread < Thread
 	end
 
 	def initialize(poller_modules, collector_bind_address, quantum, time_scale, runs, startup_run, process_limit, process_time_out)
-		log.info "scheduler run process limit set to #{process_limit}"
-		log.info "scheduler run process time-out after #{process_time_out} seconds"
-
 		probe_scheduler = ProbeScheduler.new(quantum, time_scale)
 		probe_scheduler.schedule_modules(poller_modules)
 
 		# start thread
 		super do
 			abort_on_exception = true
-
-			SchedulerRunProcessPool.new(process_limit) do |process_pool|
+			SchedulerRunProcessPool.new(process_limit, process_time_out) do |process_pool|
 				probe_scheduler.run!(runs, startup_run) do |probes, run_no|
-					process_pool.fork_process(probes, collector_bind_address, process_time_out, run_no)
+					process_pool.fork_process(probes, collector_bind_address, run_no)
 				end
 
 				log.info "scheduler finished #{runs} runs, shutting down..."
