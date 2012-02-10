@@ -43,11 +43,15 @@ settings.module_dir.each do |module_dir|
 	poller_modules.load_directory(module_dir)
 end
 
+# used to signal shutdown form threads
+shutdown_queue = Queue.new
+
 log.info "Starting collector thread"
-collector_thread = CollectorThread.new(settings.collector_bind_address, settings.data_processor_address, settings.location)
+collector_thread = CollectorThread.new(shutdown_queue, settings.collector_bind_address, settings.data_processor_address, settings.location)
 
 log.info "Starting scheduler thread"
 scheduler_thread = SchedulerThread.new(
+	shutdown_queue,
 	poller_modules, 
 	settings.collector_bind_address,
 	settings.scheduler_quantum * settings.time_scale, 
@@ -61,13 +65,26 @@ scheduler_thread = SchedulerThread.new(
 log.info "DMS Poller ready"
 
 begin
-	scheduler_thread.join
+	# wait for thread shutdown
+	thread_name = shutdown_queue.pop
+	log.info "thread #{thread_name} exited"
 rescue Interrupt
-	log.info "interrupted, shutting down..."
+	log.info "interrupted"
+ensure
+	log.info "shutting down..."
+
+	scheduler_thread.raise(Interrupt)
+	collector_thread.raise(Interrupt)
+
+	unless scheduler_thread.join(60)
+		log.warn "forcing scheduler thread termination"
+		scheduler_thread.terminate
+	end
+
+	unless collector_thread.join(60)
+		log.warn "forcing collector thread termination"
+		collector_thread.terminate
+	end
 end
 
-collector_thread.terminate
-collector_thread.join
-
 log.info "dms-poller done"
-
