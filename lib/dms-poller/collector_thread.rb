@@ -9,7 +9,7 @@ class CollectorThread < ProcessingThread
 			ZeroMQ.new do |zmq|
 				begin
 					zmq.pull_bind(collector_bind_address) do |pull|
-						zmq.push_connect(data_processor_address, 1, 2.5) do |push|
+						zmq.push_connect(data_processor_address) do |push|
 							loop do
 								message = pull.recv
 								if message.class != RawDatum
