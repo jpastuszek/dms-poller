@@ -16,6 +16,7 @@ class ProcessingThread < Thread
 	end
 
 	def shutdown(time_out)
+		return unless alive?
 		raise(Interrupt)
 		unless join(time_out)
 			log.warn "forced termination after #{time_out} seconds"
