@@ -73,18 +73,9 @@ rescue Interrupt
 ensure
 	log.info "shutting down..."
 
-	scheduler_thread.raise(Interrupt)
-	collector_thread.raise(Interrupt)
-
-	unless scheduler_thread.join(60)
-		log.warn "forcing scheduler thread termination"
-		scheduler_thread.terminate
-	end
-
-	unless collector_thread.join(60)
-		log.warn "forcing collector thread termination"
-		collector_thread.terminate
-	end
+	scheduler_thread.shutdown(60)
+	collector_thread.shutdown(60)
 end
 
 log.info "dms-poller done"
+
