@@ -25,7 +25,10 @@ describe PollerModule do
 		end
 
 		it "provides RawDatum objects" do
-			data = subject.run
+			data = []
+			subject.run do |raw_datum|
+				data << raw_datum
+			end
 
 			data.should have(10).items
 
@@ -44,7 +47,10 @@ describe PollerModule do
 			end
 
 			Capture.stderr do
-				data = p.run
+				data = []
+				p.run do |raw_datum|
+					data << raw_datum
+				end
 				data.should have(1).element
 			end.should include("Probe system/sysstat raised error: RuntimeError: test error")
 		end

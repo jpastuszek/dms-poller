@@ -10,18 +10,19 @@ class PollerModule < Hash
 		def initialize(module_name, probe_name, &block)
 			@module_name = module_name.to_sym
 			@probe_name = probe_name.to_sym
-			@collector = block
+			@probe_code = block
 			@schedule = 60.0
 		end
 
-		def run
-			@data = []
+		def run(&block)
 			begin
-				instance_eval &@collector
+				@collector = block
+				instance_eval &@probe_code
 			rescue => e
 				log.error "Probe #{@module_name}/#{@probe_name} raised error: #{e.class.name}: #{e.message}"
+			ensure
+				@collector = nil
 			end
-			@data
 		end
 
 		def schedule_every(seconds)
@@ -32,7 +33,7 @@ class PollerModule < Hash
 		private
 
 		def collect(type, group, component, value)
-			@data << RawDatum.new(type, group, component, value)
+			@collector.call(RawDatum.new(type, group, component, value))
 		end
 	end
 

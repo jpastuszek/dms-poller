@@ -15,7 +15,7 @@ class SchedulerRunProcessPool < ProcessPool
 						@probes.each_with_index do |probe, probe_no|
 							log.debug "running probe: #{probe.module_name}/#{probe.probe_name} (#{probe_no + 1}/#{@probes.length})"
 
-							probe.run.each do |raw_datum|
+							probe.run do |raw_datum|
 								log.debug "sending #{raw_datum}"
 								push.send raw_datum
 							end
