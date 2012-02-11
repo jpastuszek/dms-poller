@@ -38,12 +38,12 @@ settings = CLI.new do
 		short: :c,
 		cast: Integer,
 		description: 'queue up to specified number of data messages in memory if data processor is not available',
-		default: 2000
+		default: '20_000'
 	option :disk_queue_size,
 		short: :C,
 		cast: Integer,
 		description: 'use up to specified number of bytes to queue data messages to disk if memory queue is full',
-		default: '10_000_000'
+		default: '20_000_000'
 	option :process_limit,
 		short: :p,
 		cast: Integer,
