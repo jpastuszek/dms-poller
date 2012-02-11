@@ -2,8 +2,9 @@ require 'dms-poller/process_pool'
 
 class SchedulerRunProcessPool < ProcessPool
 	class SchedulerRunProcess
-		def initialize(probes, bind_address, run_no)
+		def initialize(probes, location, bind_address, run_no)
 			@probes = probes
+			@location = location
 			@bind_address = bind_address
 			logging_context("#{run_no}|#{::Process.pid}")
 		end
@@ -15,9 +16,9 @@ class SchedulerRunProcessPool < ProcessPool
 						@probes.each_with_index do |probe, probe_no|
 							log.debug "running probe: #{probe.module_name}/#{probe.probe_name} (#{probe_no + 1}/#{@probes.length})"
 
-							probe.run do |raw_datum|
-								log.debug "sending #{raw_datum}"
-								push.send raw_datum
+							probe.run(@location) do |raw_data_point|
+								log.debug "sending #{raw_data_point}"
+								push.send raw_data_point
 							end
 						end
 					end
@@ -45,10 +46,10 @@ class SchedulerRunProcessPool < ProcessPool
 		super(process_limit)
 	end
 
-	def fork_process(probes, collector_bind_address, run_no)
+	def fork_process(probes, location, collector_bind_address, run_no)
 		begin
 			process(@process_time_out) do |process|
-				scheduler_run_process = SchedulerRunProcess.new(probes, collector_bind_address, run_no)
+				scheduler_run_process = SchedulerRunProcess.new(probes, location, collector_bind_address, run_no)
 				process.on_timeout do |time_out|
 					scheduler_run_process.timed_out(time_out)
 				end

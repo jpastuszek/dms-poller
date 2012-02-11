@@ -102,7 +102,6 @@ collector_thread = CollectorThread.new(
 	shutdown_queue, 
 	settings.collector_bind_address, 
 	settings.data_processor_address, 
-	settings.location,
 	settings.queue_message_count,
 	settings.disk_queue_size,
 	settings.linger_time
@@ -112,6 +111,7 @@ log.info "Starting scheduler thread"
 scheduler_thread = SchedulerThread.new(
 	shutdown_queue,
 	poller_modules, 
+	settings.location,
 	settings.collector_bind_address,
 	settings.scheduler_quantum * settings.time_scale, 
 	settings.time_scale, 

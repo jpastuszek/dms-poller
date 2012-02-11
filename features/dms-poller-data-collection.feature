@@ -1,6 +1,6 @@
-Feature: Poller should collect RawDatum from running probes
+Feature: Poller should collect RawDataPoint from running probes
 	In order for dms-poller to produce RawDataPoints
-	It has to collect RawDatum from running probes
+	It has to collect RawDataPoint from running probes
 
 
 	Background:

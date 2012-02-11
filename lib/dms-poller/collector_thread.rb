@@ -1,7 +1,7 @@
 require 'dms-poller/processing_thread'
 
 class CollectorThread < ProcessingThread
-	def initialize(shutdown_queue, collector_bind_address, data_processor_address, location, queue_message_count, disk_queue_size, linger_time)
+	def initialize(shutdown_queue, collector_bind_address, data_processor_address, queue_message_count, disk_queue_size, linger_time)
 		log.info "Binding collector socket at: #{collector_bind_address}"
 		log.info "Connecting collector with data porcessor at: #{data_processor_address}"
 
@@ -12,15 +12,13 @@ class CollectorThread < ProcessingThread
 						zmq.push_connect(data_processor_address, queue_message_count, disk_queue_size, 0, linger_time) do |push|
 							loop do
 								message = pull.recv
-								if message.class != RawDatum
-									log.warn "collected message of type: #{message.class.name}, expected RawDatum"
+								if message.class != RawDataPoint
+									log.warn "collected message of type: #{message.class.name}, expected RawDataPoint"
 									next
 								end
 
-								raw_data_point = message.to_raw_data_point(location)
-
-								log.debug "sending #{raw_data_point}"
-								push.send raw_data_point
+								log.debug "sending #{message}"
+								push.send message
 							end
 						end
 					end 

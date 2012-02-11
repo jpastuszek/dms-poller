@@ -29,11 +29,11 @@ describe SchedulerRunProcessPool do
 		@addr = 'ipc:///tmp/dms-poller-test'
 	end
 
-	it "should produce RawDatum objects on ZeroMQ endpoint" do
+	it "should produce RawDataPoint objects on ZeroMQ endpoint" do
 		ZeroMQ.new do |zmq|
 			zmq.pull_bind(@addr) do |pull|
 				SchedulerRunProcessPool.new(10, 2) do |pool|
-					pool.fork_process(@probes, @addr, 0)
+					pool.fork_process(@probes, 'magi', @addr, 0)
 				end
 
 				raw_data = []
@@ -41,8 +41,9 @@ describe SchedulerRunProcessPool do
 					raw_data << pull.recv
 				end
 
-				raw_data.should have(5).raw_datum
-				raw_data.first.should be_a RawDatum
+				raw_data.should have(5).raw_data_point
+				raw_data.first.should be_a RawDataPoint
+				raw_data.first.location.should == 'magi'
 				raw_data.first.type.should == 'CPU usage'
 				raw_data.first.group.should == 'total'
 				raw_data.first.component.should == 'idle'

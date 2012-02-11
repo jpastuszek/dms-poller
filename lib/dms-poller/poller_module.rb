@@ -14,13 +14,15 @@ class PollerModule < Hash
 			@schedule = 60.0
 		end
 
-		def run(&block)
+		def run(location, &block)
 			begin
+				@location = location
 				@collector = block
 				instance_eval &@probe_code
 			rescue => e
 				log.error "Probe #{@module_name}/#{@probe_name} raised error: #{e.class.name}: #{e.message}"
 			ensure
+				@location = nil
 				@collector = nil
 			end
 		end
@@ -32,8 +34,8 @@ class PollerModule < Hash
 
 		private
 
-		def collect(type, group, component, value)
-			@collector.call(RawDatum.new(type, group, component, value))
+		def collect(type, group, component, value, options = {})
+			@collector.call(RawDataPoint.new((options[:location] or @location), type, group, component, value))
 		end
 	end
 

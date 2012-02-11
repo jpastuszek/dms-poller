@@ -10,12 +10,12 @@ class ProbeScheduler
 	end
 
 	def schedule_modules(poller_modules)
-		poller_modules.each_pair do |poller_module_name, poller_module|
-			poller_module.each_pair do |probe_name, probe|
+		poller_modules.each_value do |poller_module|
+			poller_module.each_value do |probe|
 				@all_probes << probe
 
 				schedule = probe.schedule * @time_scale 
-				log.info "scheduling probe #{poller_module_name}/#{probe_name} to run every #{schedule} seconds"
+				log.info "scheduling probe #{probe.module_name}/#{probe.probe_name} to run every #{schedule} seconds"
 				@scheduler.schedule(schedule, true) do
 					probe
 				end

@@ -3,7 +3,7 @@ require 'dms-poller/scheduler_run_process_pool'
 require 'dms-poller/probe_scheduler'
 
 class SchedulerThread < ProcessingThread
-	def initialize(shutdown_queue, poller_modules, collector_bind_address, quantum, time_scale, runs, startup_run, process_limit, process_time_out)
+	def initialize(shutdown_queue, poller_modules, location, collector_bind_address, quantum, time_scale, runs, startup_run, process_limit, process_time_out)
 		probe_scheduler = ProbeScheduler.new(quantum, time_scale)
 		probe_scheduler.schedule_modules(poller_modules)
 
@@ -11,7 +11,7 @@ class SchedulerThread < ProcessingThread
 			SchedulerRunProcessPool.new(process_limit, process_time_out) do |process_pool|
 				begin
 					probe_scheduler.run!(runs, startup_run) do |probes, run_no|
-						process_pool.fork_process(probes, collector_bind_address, run_no)
+						process_pool.fork_process(probes, location, collector_bind_address, run_no)
 					end
 
 					log.info "scheduler finished #{runs} runs, shutting down..."

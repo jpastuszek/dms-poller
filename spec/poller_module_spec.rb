@@ -15,7 +15,7 @@ describe PollerModule do
 				collect 'system', 'process', 'context switches', 321231
 				collect 'system', 'process', 'context switches', 321231
 				collect 'system', 'process', 'running', 9
-				collect 'system', 'process', 'blocked', 0
+				collect 'system', 'process', 'blocked', 0, location: 'router01'
 			end
 		end
 
@@ -24,19 +24,22 @@ describe PollerModule do
 			subject.probe_name.should == :sysstat
 		end
 
-		it "provides RawDatum objects" do
+		it "provides RawDataPoint objects" do
 			data = []
-			subject.run do |raw_datum|
-				data << raw_datum
+			subject.run('magi') do |raw_data_point|
+				data << raw_data_point
 			end
 
 			data.should have(10).items
 
-			data.first.should be_a RawDatum
+			data.first.should be_a RawDataPoint
+			data.first.location.should == 'magi'
 			data.first.type.should == 'CPU usage'
 			data.first.group.should == 'total'
 			data.first.component.should == 'idle'
 			data.first.value.should == 3123
+
+			data.last.location.should == 'router01'
 		end
 
 		it "logs collector exceptions" do
@@ -48,8 +51,8 @@ describe PollerModule do
 
 			Capture.stderr do
 				data = []
-				p.run do |raw_datum|
-					data << raw_datum
+				p.run('magi') do |raw_data_point|
+					data << raw_data_point
 				end
 				data.should have(1).element
 			end.should include("Probe system/sysstat raised error: RuntimeError: test error")
