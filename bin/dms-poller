@@ -131,9 +131,8 @@ rescue Interrupt
 	log.info "interrupted"
 ensure
 	log.info "shutting down..."
-
-	scheduler_thread.shutdown(60)
-	collector_thread.shutdown(60)
+	scheduler_thread.shutdown(settings.process_time_out + 2)
+	collector_thread.shutdown(settings.linger_time + 2)
 end
 
 log.info "dms-poller done"
