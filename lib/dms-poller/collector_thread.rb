@@ -1,7 +1,7 @@
 require 'dms-poller/processing_thread'
 
 class CollectorThread < ProcessingThread
-	def initialize(shutdown_queue, collector_bind_address, data_processor_address, location)
+	def initialize(shutdown_queue, collector_bind_address, data_processor_address, location, queue_message_count, disk_queue_size)
 		log.info "Binding collector socket at: #{collector_bind_address}"
 		log.info "Connecting collector with data porcessor at: #{data_processor_address}"
 
@@ -9,7 +9,7 @@ class CollectorThread < ProcessingThread
 			ZeroMQ.new do |zmq|
 				begin
 					zmq.pull_bind(collector_bind_address) do |pull|
-						zmq.push_connect(data_processor_address) do |push|
+						zmq.push_connect(data_processor_address, queue_message_count, disk_queue_size, 100) do |push|
 							loop do
 								message = pull.recv
 								if message.class != RawDatum

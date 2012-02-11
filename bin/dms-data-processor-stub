@@ -15,7 +15,7 @@ ZeroMQ.new do |zmq|
 	zmq.pull_bind(settings.bind_address) do |pull|
 		messages = 1
 		until settings.message_count and messages > settings.message_count
-			puts pull.recv
+			puts "#{messages}: #{pull.recv}"
 			messages += 1
 		end
 	end

@@ -47,3 +47,6 @@ pkg
 
 # For rubinius:
 #*.rbc
+
+# 0MQ swap files
+*.swap
