@@ -84,7 +84,7 @@ end
 Logging.logger.root.level = :debug if settings.debug
 
 logging_class_name 'DMSPoller'
-log.info "Starting DMS Poller version #{VERSION}; pid #{Process.pid}"
+log.info "Starting DMS Poller version #{VERSION} (LibZMQ version #{ZeroMQ.lib_version}, ffi-ruby version #{ZeroMQ.binding_version}); pid #{Process.pid}"
 
 log.debug settings.inspect
 
