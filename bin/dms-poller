@@ -12,67 +12,67 @@ settings = CLI.new do
 	description "DMS data collection agent"
 	version VERSION
 	switch :debug,
-		:short => :d,
-		:description => 'enable debugging'
+		short: :d,
+		description: 'enable debugging'
 	options :module_dir,
-		:short => :m,
-		:cast => Pathname,
-		:description => 'path to directory from which poller modules are loaded',
-		:default => Pathname.new(__FILE__).dirname + '..' + 'module.d'
+		short: :m,
+		cast: Pathname,
+		description: 'path to directory from which poller modules are loaded',
+		default: Pathname.new(__FILE__).dirname + '..' + 'module.d'
 	switch :startup_run,
-		:short => :s,
-		:description => 'run all probes on startup (may cause load spike)'
+		short: :s,
+		description: 'run all probes on startup (may cause load spike)'
 	option :collector_bind_address,
-		:short => :b,
-		:description => 'ZeroMQ bind adderss of probe data collection endpoint',
-		:default => 'ipc:///tmp/dms-poller-collector'
+		short: :b,
+		description: 'ZeroMQ bind adderss of probe data collection endpoint',
+		default: 'ipc:///tmp/dms-poller-collector'
 	option :data_processor_address,	
-		:short => :D,
-		:description => 'ZeroMQ adderss of data processor that all collected data will be pushed to',
-		:default => 'tcp://127.0.0.1:12100'
+		short: :D,
+		description: 'ZeroMQ adderss of data processor that all collected data will be pushed to',
+		default: 'tcp://127.0.0.1:12100'
 	option :location,
-		:short => :l,
-		:description => 'location string',
-		:default => Socket.gethostbyname(Socket.gethostname).first
+		short: :l,
+		description: 'location string',
+		default: Socket.gethostbyname(Socket.gethostname).first
 	option :queue_message_count,
-		:short => :c,
-		:cast => Integer,
-		:description => 'queue up to specified number of data messages in memory if data processor is not available',
-		:default => 2000
+		short: :c,
+		cast: Integer,
+		description: 'queue up to specified number of data messages in memory if data processor is not available',
+		default: 2000
 	option :disk_queue_size,
-		:short => :C,
-		:cast => Integer,
-		:description => 'use up to specified number of bytes to queue data messages to disk if memory queue is full',
-		:default => '10_000_000'
+		short: :C,
+		cast: Integer,
+		description: 'use up to specified number of bytes to queue data messages to disk if memory queue is full',
+		default: '10_000_000'
 	option :process_limit,
-		:short => :p,
-		:cast => Integer,
-		:description => 'maximum number of scheduler run processes that can run in parallel',
-		:default => 8
+		short: :p,
+		cast: Integer,
+		description: 'maximum number of scheduler run processes that can run in parallel',
+		default: 8
 	option :process_time_out,
-		:short => :o,
-		:cast => Float,
-		:description => 'maximum number of seconds that a scheduler run process can run',
-		:default => 120
+		short: :o,
+		cast: Float,
+		description: 'maximum number of seconds that a scheduler run process can run',
+		default: 120
 	option :scheduler_quantum,
-		:short => :q,
-		:cast => Float,
-		:description => 'minimal time between scheduler runs in seconds',
-		:default => 1.0
+		short: :q,
+		cast: Float,
+		description: 'minimal time between scheduler runs in seconds',
+		default: 1.0
 	option :linger_time,
-		:short => :L,
-		:cast => Integer,
-		:description => 'how many seconds to wait for outstanding messages to be sent to data processor before exiting',
-		:default => 10
+		short: :L,
+		cast: Integer,
+		description: 'how many seconds to wait for outstanding messages to be sent to data processor before exiting',
+		default: 10
 	option :runs,
-		:short => :r,
-		:cast => Integer,
-		:description => 'run specific number of scheduler runs and exit (useful for testing)'
+		short: :r,
+		cast: Integer,
+		description: 'run specific number of scheduler runs and exit (useful for testing)'
 	option :time_scale,
-		:short => :t,
-		:cast => Float,
-		:description => 'scheduling time scale - 0.1 is 10x faster (useful for testing)',
-		:default => 1.0
+		short: :t,
+		cast: Float,
+		description: 'scheduling time scale - 0.1 is 10x faster (useful for testing)',
+		default: 1.0
 end.parse! do |settings|
 	settings.module_dir.each do |m|
 		fail "module directory does not exist: #{m}" unless m.directory?
