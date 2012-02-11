@@ -6,6 +6,7 @@ Feature: Poller should run probes in isolated environment
 		Given dms-poller program
 		And time scale 0.01
 		And use startup run
+		And use linger time of 0
 		And debug enabled
 		Given poller module directory broken containing module system:
 		"""

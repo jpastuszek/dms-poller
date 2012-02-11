@@ -66,6 +66,10 @@ Given /scheduler run process time-out of (.+)/ do |timeout|
 	@program_args << ['--process-time-out', timeout.to_f]
 end
 
+Given /use linger time of (.+)/ do |linger_time|
+	@program_args << ['--linger-time', linger_time.to_i]
+end
+
 And /bind collector at (.+)/ do |bind_address|
 	@program_args << ['--collector-bind-address', bind_address]
 end

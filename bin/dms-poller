@@ -27,7 +27,7 @@ settings = CLI.new do
 		:description => 'ZeroMQ bind adderss of probe data collection endpoint',
 		:default => 'ipc:///tmp/dms-poller-collector'
 	option :data_processor_address,	
-		:short => :p,
+		:short => :D,
 		:description => 'ZeroMQ adderss of data processor that all collected data will be pushed to',
 		:default => 'tcp://127.0.0.1:12100'
 	option :location,
@@ -45,7 +45,7 @@ settings = CLI.new do
 		:description => 'use up to specified number of bytes to queue data messages to disk if memory queue is full',
 		:default => '10_000_000'
 	option :process_limit,
-		:short => :L,
+		:short => :p,
 		:cast => Integer,
 		:description => 'maximum number of scheduler run processes that can run in parallel',
 		:default => 8
@@ -59,6 +59,11 @@ settings = CLI.new do
 		:cast => Float,
 		:description => 'minimal time between scheduler runs in seconds',
 		:default => 1.0
+	option :linger_time,
+		:short => :L,
+		:cast => Integer,
+		:description => 'how many seconds to wait for outstanding messages to be sent to data processor before exiting',
+		:default => 10
 	option :runs,
 		:short => :r,
 		:cast => Integer,
@@ -99,7 +104,8 @@ collector_thread = CollectorThread.new(
 	settings.data_processor_address, 
 	settings.location,
 	settings.queue_message_count,
-	settings.disk_queue_size
+	settings.disk_queue_size,
+	settings.linger_time
 )
 
 log.info "Starting scheduler thread"
