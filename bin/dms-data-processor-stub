@@ -12,12 +12,18 @@ settings = CLI.new do
 end.parse!
 
 ZeroMQ.new do |zmq|
-	zmq.pull_bind(settings.bind_address) do |pull|
-		messages = 1
-		until settings.message_count and messages > settings.message_count
-			puts "#{messages}: #{pull.recv}"
-			messages += 1
+	start = Time.now.to_f
+	messages = 1
+	begin
+		zmq.pull_bind(settings.bind_address) do |pull|
+			until settings.message_count and messages > settings.message_count
+				puts "#{messages}: #{pull.recv}"
+				messages += 1
+			end
 		end
+	ensure
+		took = Time.now.to_f - start
+		puts "Took: #{took} seconds; #{messages.to_f / took} messages/s"
 	end
 end
 
