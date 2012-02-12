@@ -17,7 +17,7 @@ class CollectorThread < ProcessingThread
 									next
 								end
 
-								log.debug "sending #{message}"
+								#log.debug "sending #{message}"
 								push.send message
 							end
 						end
