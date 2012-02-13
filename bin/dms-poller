@@ -1,9 +1,9 @@
-#!/usr/bin/ruby
+#!/usr/bin/env ruby
 $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 
-require 'socket'
 require 'cli'
 require 'pathname'
+require 'facter'
 require 'dms-poller'
 
 VERSION = (Pathname.new(__FILE__).dirname + '../VERSION').read
@@ -33,7 +33,7 @@ settings = CLI.new do
 	option :location,
 		short: :l,
 		description: 'location string',
-		default: Socket.gethostbyname(Socket.gethostname).first
+		default: Facter.fqdn
 	option :queue_message_count,
 		short: :c,
 		cast: Integer,
@@ -84,7 +84,7 @@ end
 Logging.logger.root.level = :debug if settings.debug
 
 logging_class_name 'DMSPoller'
-log.info "Starting DMS Poller version #{VERSION} (LibZMQ version #{ZeroMQ.lib_version}, ffi-ruby version #{ZeroMQ.binding_version}); pid #{Process.pid}"
+log.info "Starting DMS Poller version #{VERSION} (LibZMQ version #{ZeroMQ.lib_version}, ffi-ruby version #{ZeroMQ.binding_version}); location: #{settings.location}; pid #{Process.pid}"
 
 log.debug settings.inspect
 

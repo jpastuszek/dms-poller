@@ -21,7 +21,7 @@ And /data processor output should include '(.+)' (.+) time/ do |entry, times|
 end
 
 And /data processor output should include local host name (.+) time/ do |times|
-	entry = Socket.gethostbyname(Socket.gethostname).first
+	entry = Facter.fqdn
 	@data_processor_stdout.scan(entry).size.should == times.to_i
 end
 

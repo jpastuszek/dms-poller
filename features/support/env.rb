@@ -14,7 +14,7 @@ require 'rspec/expectations'
 require 'capture-output'
 require 'tmpdir'
 require 'timeout'
-require 'socket'
+require 'facter'
 
 def run(program, args = '')
 	out = []
