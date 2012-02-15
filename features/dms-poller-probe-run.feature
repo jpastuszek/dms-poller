@@ -11,25 +11,25 @@ Feature: Poller should run probes in isolated environment
 		Given poller module directory broken containing module system:
 		"""
 		probe(:sysstat) do
-			collect 'CPU usage', 'total', 'idle', 3123
+			collect 'CPU usage/total', 'idle', 3123
 			raise 'test error'
-			collect 'system', 'process', 'blocked', 0
+			collect 'system/process', 'blocked', 0
 		end.schedule_every 10.second
 		"""
 		Given poller module directory slow containing module system:
 		"""
 		probe(:sysstat) do
-			collect 'CPU usage', 'total', 'idle', 3123
+			collect 'CPU usage/total', 'idle', 3123
 			sleep 0.2
-			collect 'system', 'process', 'blocked', 0
+			collect 'system/process', 'blocked', 0
 		end.schedule_every 10.second
 		"""
 		Given poller module directory stale containing module system:
 		"""
 		probe(:sysstat) do
-			collect 'CPU usage', 'total', 'idle', 3123
+			collect 'CPU usage/total', 'idle', 3123
 			sleep 0.7
-			collect 'system', 'process', 'blocked', 0
+			collect 'system/process', 'blocked', 0
 		end.schedule_every 5.second
 		"""
 

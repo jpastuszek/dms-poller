@@ -6,16 +6,16 @@ describe PollerModule do
 	describe PollerModule::Probe do
 		subject do
 			PollerModule::Probe.new(:system, :sysstat) do
-				collect 'CPU usage', 'total', 'idle', 3123
-				collect 'CPU usage', 'total', 'usage', 12
-				collect 'CPU usage', 'total', 'nice', 342
-				collect 'CPU usage', 'CPU 1', 'idle', 3123
-				collect 'CPU usage', 'CPU 1', 'usage', 12
-				collect 'CPU usage', 'CPU 2', 'nice', 342
-				collect 'system', 'process', 'context switches', 321231
-				collect 'system', 'process', 'context switches', 321231
-				collect 'system', 'process', 'running', 9
-				collect 'system', 'process', 'blocked', 0, location: 'router01'
+				collect 'CPU usage/total', 'idle', 3123
+				collect 'CPU usage/total', 'usage', 12
+				collect 'CPU usage/total', 'nice', 342
+				collect 'CPU usage/CPU/1', 'idle', 3123
+				collect 'CPU usage/CPU/1', 'usage', 12
+				collect 'CPU usage/CPU/2', 'nice', 342
+				collect 'system/process', 'context switches', 321231
+				collect 'system/process', 'context switches', 321231
+				collect 'system/process', 'running', 9
+				collect 'system/process', 'blocked', 0, location: 'router01'
 			end
 		end
 
@@ -34,8 +34,7 @@ describe PollerModule do
 
 			data.first.should be_a RawDataPoint
 			data.first.location.should == 'magi'
-			data.first.type.should == 'CPU usage'
-			data.first.group.should == 'total'
+			data.first.path.should == 'CPU usage/total'
 			data.first.component.should == 'idle'
 			data.first.value.should == 3123
 
@@ -44,9 +43,9 @@ describe PollerModule do
 
 		it "logs collector exceptions" do
 			p = PollerModule::Probe.new(:system, :sysstat) do
-				collect 'CPU usage', 'total', 'idle', 3123
+				collect 'CPU usage/total', 'idle', 3123
 				raise "test error"
-				collect 'system', 'process', 'blocked', 0
+				collect 'system/process', 'blocked', 0
 			end
 
 			Capture.stderr do
@@ -77,14 +76,14 @@ describe PollerModule do
 	subject do
 		PollerModule.new(:system) do
 			probe(:sysstat) do
-				collect 'CPU usage', 'total', 'idle', 3123
-				collect 'system', 'process', 'blocked', 0
+				collect 'CPU usage/total', 'idle', 3123
+				collect 'system/process', 'blocked', 0
 			end
 
 			probe(:memory) do
-				collect 'system', '', 'total', 8182644
-				collect 'system', '', 'free', 5577396
-				collect 'system', '', 'buffers', 254404
+				collect 'system/memory', 'total', 8182644
+				collect 'system/memory', 'free', 5577396
+				collect 'system/memory', 'buffers', 254404
 			end
 		end
 	end
@@ -101,8 +100,8 @@ describe PollerModule do
 	it "can be loaded from string" do
 		m = PollerModule.load(:system, <<'EOF')
 			probe(:sysstat) do
-				collect 'CPU usage', 'total', 'idle', 3123
-				collect 'system', 'process', 'blocked', 0
+				collect 'CPU usage/total', 'idle', 3123
+				collect 'system/process', 'blocked', 0
 			end
 EOF
 		m[:sysstat].should be_a PollerModule::Probe
@@ -116,14 +115,14 @@ describe PollerModules do
 		(@modules_dir + 'system.rb').open('w') do |f|
 			f.write <<'EOF'
 probe(:sysstat) do
-	collect 'CPU usage', 'total', 'idle', 3123
-	collect 'system', 'process', 'blocked', 0
+	collect 'CPU usage/total', 'idle', 3123
+	collect 'system/process', 'blocked', 0
 end
 
 probe(:memory) do
-	collect 'system', '', 'total', 8182644
-	collect 'system', '', 'free', 5577396
-	collect 'system', '', 'buffers', 254404
+	collect 'system/memory', 'total', 8182644
+	collect 'system/memory', 'free', 5577396
+	collect 'system/memory', 'buffers', 254404
 end
 EOF
 		end
@@ -135,7 +134,7 @@ EOF
 		(@modules_dir + 'jmx.rb').open('w') do |f|
 			f.write <<'EOF'
 probe(:gc) do
-	collect 'JMX', '1234/GC/PermGen', 'collections', 231
+	collect 'JMX/1234/GC/PermGen', 'collections', 231
 end
 EOF
 		end

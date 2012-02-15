@@ -34,8 +34,8 @@ class PollerModule < Hash
 
 		private
 
-		def collect(type, group, component, value, options = {})
-			@collector.call(RawDataPoint.new((options[:location] or @location), type, group, component, value))
+		def collect(path, component, value, options = {})
+			@collector.call(RawDataPoint.new((options[:location] or @location), path, component, value))
 		end
 	end
 

@@ -12,14 +12,14 @@ Feature: Poller startup and testing features
 		Given poller module directory basic containing module system:
 		"""
 		probe(:sysstat) do
-			collect 'CPU usage', 'total', 'idle', 3123
-			collect 'system', 'process', 'blocked', 0
+			collect 'CPU usage/total', 'idle', 3123
+			collect 'system/process', 'blocked', 0
 		end.schedule_every 10.second
 
 		probe(:memory) do
-			collect 'system', '', 'total', 8182644
-			collect 'system', '', 'free', 5577396
-			collect 'system', '', 'buffers', 254404
+			collect 'system/memory', 'total', 8182644
+			collect 'system/memory', 'free', 5577396
+			collect 'system/memory', 'buffers', 254404
 		end.schedule_every 30.seconds
 		"""
 
