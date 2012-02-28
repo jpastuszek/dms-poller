@@ -191,7 +191,7 @@ EOF
 		mod.probes.should have(0).probes
 
 		out.should include("WARN")
-		out.should include("module 'empty' defines not probes")
+		out.should include("module 'empty' defines no probes")
 	end
 
 	it "should load directory in alphabetical order and log that" do
@@ -219,7 +219,7 @@ EOF
 
 		out.should include("WARN")
 		out.should include("loading module 'empty' from:")
-		out.should include("module 'empty' defines not probes")
+		out.should include("module 'empty' defines no probes")
 
 		out.should include("loading module 'system' from:")
 		out.should include("loaded probes: system/memory, system/sysstat")
