@@ -70,7 +70,7 @@ class PollerModule < ModuleBase
 
 		super
 
-		if probes.empty?
+		if @probes.empty?
 			log.warn "module '#{module_name}' defines not probes"
 		else
 			log.info { "loaded probes: #{@probes.map{|p| "#{p.to_s}"}.sort.join(', ')}" }
