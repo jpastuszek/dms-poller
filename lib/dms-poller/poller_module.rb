@@ -65,9 +65,7 @@ class PollerModule < ModuleBase
 	def initialize(module_name, &block)
 		@probes = []
 		dsl_method :probe do |probe_name, &block|
-			p = Probe.new("#{module_name}/#{probe_name}", &block)
-			@probes << p
-			p
+			Probe.new("#{module_name}/#{probe_name}", &block).tap{|probe| @probes << probe}
 		end
 
 		super
