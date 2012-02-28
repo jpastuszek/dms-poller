@@ -19,30 +19,26 @@ require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
 describe SchedulerRunProcessPool do
 	before :all do
-		m_system = PollerModule.new(:system) do
-			probe(:sysstat) do
+		m_system = PollerModule.new('system') do
+			probe('sysstat') do
 				collect 'CPU usage/total', 'idle', 3123
 				collect 'system/process', 'blocked', 0
 			end.schedule_every 10.second
 
-			probe(:memory) do
+			probe('memory') do
 				collect 'system/memory', 'total', 8182644
 				collect 'system/memory', 'free', 5577396
 				collect 'system/memory', 'buffers', 254404
 			end.schedule_every 30.seconds
 		end
 
-		m_jmx = PollerModule.new(:jmx) do
-			probe(:gc) do
+		m_jmx = PollerModule.new('jmx') do
+			probe('gc') do
 				collect 'JMX/1234/GC/PermGen', 'collections', 231
 			end.schedule_every 60.seconds
 		end
 
-		@probes = []
-		m_system.merge(m_jmx).each_value do |probe|
-			@probes << probe
-		end
-
+		@probes = m_system.probes + m_jmx.probes
 		@addr = 'ipc:///tmp/dms-poller-test'
 	end
 

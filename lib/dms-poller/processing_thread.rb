@@ -20,12 +20,13 @@ require 'thread'
 class ProcessingThread < Thread
 	def initialize(shutdown_queue)
 		super do
+			abort_on_exception = true
 			begin
 					yield
 			rescue Interrupt
 				log.info "exiting"
-			rescue => e
-				log.fatal "got error: #{e}: #{e.message}"
+			rescue => error
+				log.fatal "got error: #{error.class.name}: #{error.message}"
 			ensure
 				shutdown_queue.push self.class.name
 			end

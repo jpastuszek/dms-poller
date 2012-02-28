@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Distributed Monitoring System.  If not, see <http://www.gnu.org/licenses/>.
 
-probe(:stat) do
+probe('stat') do
 	File.open('/proc/stat') do |stat_file|
 		stat_file.each_line do |line|
 			case line
@@ -59,7 +59,7 @@ probe(:stat) do
 	end
 end.schedule_every 10.second
 
-probe(:meminfo) do
+probe('meminfo') do
 	File.open('/proc/meminfo') do |mem_file|
 		mem_file.each_line do |line|
 			title, value = line.split(/: */)

@@ -107,8 +107,11 @@ log.debug settings.inspect
 
 poller_modules = PollerModules.new
 
+probes = []
 settings.module_dir.each do |module_dir|
-	poller_modules.load_directory(module_dir)
+	poller_modules.load_directory(module_dir).each do |poller_module|
+		probes.concat poller_module.probes
+	end
 end
 
 # used to signal shutdown form threads
@@ -127,7 +130,7 @@ collector_thread = CollectorThread.new(
 log.info "Starting scheduler thread"
 scheduler_thread = SchedulerThread.new(
 	shutdown_queue,
-	poller_modules, 
+	probes, 
 	settings.location,
 	settings.collector_bind_address,
 	settings.scheduler_quantum * settings.time_scale, 

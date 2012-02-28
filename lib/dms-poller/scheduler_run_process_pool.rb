@@ -31,7 +31,7 @@ class SchedulerRunProcessPool < ProcessPool
 				ZeroMQ.new do |zmq|
 					zmq.push_connect(@bind_address) do |push|
 						@probes.each_with_index do |probe, probe_no|
-							log.debug "running probe: #{probe.module_name}/#{probe.probe_name} (#{probe_no + 1}/#{@probes.length})"
+							log.debug "running probe: #{probe} (#{probe_no + 1}/#{@probes.length})"
 
 							probe.run(@location) do |raw_data_point|
 								log.debug "sending #{raw_data_point}"

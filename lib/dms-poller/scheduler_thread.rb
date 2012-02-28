@@ -20,9 +20,9 @@ require 'dms-poller/scheduler_run_process_pool'
 require 'dms-poller/probe_scheduler'
 
 class SchedulerThread < ProcessingThread
-	def initialize(shutdown_queue, poller_modules, location, collector_bind_address, quantum, time_scale, runs, startup_run, process_limit, process_time_out)
+	def initialize(shutdown_queue, probes, location, collector_bind_address, quantum, time_scale, runs, startup_run, process_limit, process_time_out)
 		probe_scheduler = ProbeScheduler.new(quantum, time_scale)
-		probe_scheduler.schedule_modules(poller_modules)
+		probe_scheduler.schedule_probes(probes)
 
 		super(shutdown_queue) do
 			SchedulerRunProcessPool.new(process_limit, process_time_out) do |process_pool|

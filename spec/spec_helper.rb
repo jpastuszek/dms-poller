@@ -29,4 +29,6 @@ RSpec.configure do |config|
 end
 
 require 'capture-output'
+require 'tmpdir'
+require 'tempfile'
 

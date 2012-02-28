@@ -16,13 +16,11 @@
 # along with Distributed Monitoring System.  If not, see <http://www.gnu.org/licenses/>.
 
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
-require 'tmpdir'
-require 'tempfile'
 
 describe PollerModule do
 	describe PollerModule::Probe do
 		subject do
-			PollerModule::Probe.new(:system, :sysstat) do
+			PollerModule::Probe.new('system/sysstat') do
 				collect 'CPU usage/total', 'idle', 3123
 				collect 'CPU usage/total', 'usage', 12
 				collect 'CPU usage/total', 'nice', 342
@@ -37,8 +35,7 @@ describe PollerModule do
 		end
 
 		it "has a module and probe name" do
-			subject.module_name.should == :system
-			subject.probe_name.should == :sysstat
+			subject.name.should == 'system/sysstat'
 		end
 
 		it "provides RawDataPoint objects" do
@@ -59,7 +56,7 @@ describe PollerModule do
 		end
 
 		it "logs collector exceptions" do
-			p = PollerModule::Probe.new(:system, :sysstat) do
+			p = PollerModule::Probe.new('system/sysstat') do
 				collect 'CPU usage/total', 'idle', 3123
 				raise "test error"
 				collect 'system/process', 'blocked', 0
@@ -91,37 +88,44 @@ describe PollerModule do
 	end
 
 	subject do
-		PollerModule.new(:system) do
-			probe(:sysstat) do
-				collect 'CPU usage/total', 'idle', 3123
-				collect 'system/process', 'blocked', 0
-			end
+		pm = nil
+		Capture.stderr do
+			pm = PollerModule.new('system') do
+				probe('sysstat') do
+					collect 'CPU usage/total', 'idle', 3123
+					collect 'system/process', 'blocked', 0
+				end
 
-			probe(:memory) do
-				collect 'system/memory', 'total', 8182644
-				collect 'system/memory', 'free', 5577396
-				collect 'system/memory', 'buffers', 254404
+				probe('memory') do
+					collect 'system/memory', 'total', 8182644
+					collect 'system/memory', 'free', 5577396
+					collect 'system/memory', 'buffers', 254404
+				end
 			end
 		end
+		pm
 	end
 
 	it "has a name" do
-		subject.module_name.should == :system
+		subject.name.should == 'system'
 	end
 
 	it "provides access to probes" do
-		subject[:sysstat].should be_a PollerModule::Probe
-		subject[:memory].should be_a PollerModule::Probe
+		subject.probes.should have(2).probes
+		subject.probes.shift.should be_a PollerModule::Probe
+		subject.probes.shift.should be_a PollerModule::Probe
 	end
 	
 	it "can be loaded from string" do
-		m = PollerModule.load(:system, <<'EOF')
-			probe(:sysstat) do
+		Capture.stderr do
+			m = PollerModule.load('system', <<'EOF')
+				probe('sysstat') do
 				collect 'CPU usage/total', 'idle', 3123
 				collect 'system/process', 'blocked', 0
 			end
 EOF
-		m[:sysstat].should be_a PollerModule::Probe
+			m.probes.shift.should be_a PollerModule::Probe
+		end
 	end
 end
 
@@ -131,12 +135,12 @@ describe PollerModules do
 
 		(@modules_dir + 'system.rb').open('w') do |f|
 			f.write <<'EOF'
-probe(:sysstat) do
+probe('sysstat') do
 	collect 'CPU usage/total', 'idle', 3123
 	collect 'system/process', 'blocked', 0
 end
 
-probe(:memory) do
+probe('memory') do
 	collect 'system/memory', 'total', 8182644
 	collect 'system/memory', 'free', 5577396
 	collect 'system/memory', 'buffers', 254404
@@ -150,7 +154,7 @@ EOF
 
 		(@modules_dir + 'jmx.rb').open('w') do |f|
 			f.write <<'EOF'
-probe(:gc) do
+probe('gc') do
 	collect 'JMX/1234/GC/PermGen', 'collections', 231
 end
 EOF
@@ -160,30 +164,31 @@ EOF
 	it "should load module from file and log that" do
 		pms = PollerModules.new
 		
+		mod = nil
 		out = Capture.stderr do
-			pms.load_file(@modules_dir + 'system.rb')
+			mod = pms.load_file(@modules_dir + 'system.rb')
 		end
 
-		pms.keys.should have(1).module
-		pms[:system].should be_a PollerModule
+		mod.should be_a PollerModule
 
-		pms[:system].keys.should have(2).probes
-		pms[:system][:sysstat].should be_a PollerModule::Probe
-		pms[:system][:memory].should be_a PollerModule::Probe
+		mod.probes.should have(2).probes
+		mod.probes.shift.should be_a PollerModule::Probe
+		mod.probes.shift.should be_a PollerModule::Probe
 
 		out.should include("loading module 'system' from:")
-		out.should include("module 'system' probes: memory, sysstat")
+		out.should include("loaded probes: system/memory, system/sysstat")
 	end
 
 	it "should log warning message if loaded file has no probe definitions" do
 		pms = PollerModules.new
 		
+		mod = nil
 		out = Capture.stderr do
-			pms.load_file(@modules_dir + 'empty.rb')
+			mod = pms.load_file(@modules_dir + 'empty.rb')
 		end
 
-		pms.keys.should have(1).module
-		pms[:empty].should be_a PollerModule
+		mod.should be_a PollerModule
+		mod.probes.should have(0).probes
 
 		out.should include("WARN")
 		out.should include("module 'empty' defines not probes")
@@ -192,34 +197,35 @@ EOF
 	it "should load directory in alphabetical order and log that" do
 		pms = PollerModules.new
 		
+		modules = nil
 		out = Capture.stderr do
-			pms.load_directory(@modules_dir)
+			modules = pms.load_directory(@modules_dir)
 		end
 
-		pms.keys.should have(3).module
+		modules.should have(3).module
 
-		pms[:empty].should be_a PollerModule
-		pms[:empty].module_name.should == :empty
-		pms[:empty].keys.should have(0).probes
+		modules.first.should be_a PollerModule
+		modules.first.name.should == 'empty'
+		modules.shift.probes.should have(0).probes
 
-		pms[:jmx].should be_a PollerModule
-		pms[:jmx].module_name.should == :jmx
-		pms[:jmx].should include(:gc)
+		modules.first.should be_a PollerModule
+		modules.first.name.should == 'jmx'
+		modules.shift.probes.first.name.should == 'jmx/gc'
 
-		pms[:system].should be_a PollerModule
-		pms[:system].module_name.should == :system
-		pms[:system].should include(:sysstat)
-		pms[:system].should include(:memory)
+		modules.first.should be_a PollerModule
+		modules.first.name.should == 'system'
+		modules.first.probes.shift.name.should == 'system/sysstat'
+		modules.shift.probes.shift.name.should == 'system/memory'
 
 		out.should include("WARN")
 		out.should include("loading module 'empty' from:")
 		out.should include("module 'empty' defines not probes")
 
 		out.should include("loading module 'system' from:")
-		out.should include("module 'system' probes: memory, sysstat")
+		out.should include("loaded probes: system/memory, system/sysstat")
 
 		out.should include("loading module 'jmx' from:")
-		out.should include("module 'jmx' probes: gc")
+		out.should include("loaded probes: jmx/gc")
 	end
 
 	it "should log error if module cannot be loaded" do
@@ -230,10 +236,8 @@ EOF
 		pms = PollerModules.new
 		
 		out = Capture.stderr do
-			pms.load_file(module_file.path)
+			pms.load_file(module_file.path).should be_nil
 		end
-
-		pms.should have(0).module
 
 		out.should include("ERROR")
 		out.should include("error while loading module 'bad_module")
@@ -244,4 +248,5 @@ EOF
 		@modules_dir.rmtree
 	end
 end
+
 

@@ -18,15 +18,13 @@
 require 'pathname'
 require 'active_support/core_ext'
 
-class PollerModule < Hash
+class PollerModule < ModuleBase
 	class Probe
-		attr_reader :module_name
-		attr_reader :probe_name
+		attr_reader :name
 		attr_reader :schedule
 
-		def initialize(module_name, probe_name, &block)
-			@module_name = module_name.to_sym
-			@probe_name = probe_name.to_sym
+		def initialize(name, &block)
+			@name = name
 			@probe_code = block
 			@schedule = 60.0
 		end
@@ -37,7 +35,7 @@ class PollerModule < Hash
 				@collector = block
 				instance_eval &@probe_code
 			rescue => e
-				log.error "Probe #{@module_name}/#{@probe_name} raised error: #{e.class.name}: #{e.message}"
+				log.error "Probe #{@name} raised error: #{e.class.name}: #{e.message}"
 			ensure
 				@location = nil
 				@collector = nil
@@ -49,6 +47,14 @@ class PollerModule < Hash
 			self
 		end
 
+		def to_s
+			name
+		end
+
+		def inspect
+			"Probe[#{name}]"
+		end
+
 		private
 
 		def collect(path, component, value, options = {})
@@ -56,51 +62,29 @@ class PollerModule < Hash
 		end
 	end
 
-	attr_reader :module_name
-
 	def initialize(module_name, &block)
-		@module_name = module_name.to_sym
-		instance_eval &block
-	end
+		@probes = []
+		dsl_method :probe do |probe_name, &block|
+			p = Probe.new("#{module_name}/#{probe_name}", &block)
+			@probes << p
+			p
+		end
 
-	def self.load(module_name, string)
-		self.new(module_name) do
-			eval string
+		super
+
+		if probes.empty?
+			log.warn "module '#{module_name}' defines not probes"
+		else
+			log.info { "loaded probes: #{@probes.map{|p| "#{p.to_s}"}.sort.join(', ')}" }
 		end
 	end
 
-	private
-
-	def probe(probe_name, &block)
-		self[probe_name.to_sym] = Probe.new(module_name, probe_name, &block)
-	end
+	attr_reader :probes
 end
 
-class PollerModules < Hash
-	def load_directory(module_dir)
-		module_dir = Pathname.new(module_dir.to_s)
-		
-		module_dir.children.select{|f| f.extname == '.rb'}.sort.each do |module_file|
-			load_file(module_file)
-		end
-	end
-
-	def load_file(module_file)
-		module_file = Pathname.new(module_file.to_s)
-
-		module_name = module_file.basename(module_file.extname).to_s
-		log.info "loading module '#{module_name}' from: #{module_file}"
-		begin
-			m = PollerModule.load(module_name, module_file.read)
-			if m.keys.empty?
-				log.warn "module '#{module_name}' defines not probes"
-			else
-				log.info { "module '#{module_name}' probes: #{m.keys.map{|p| "#{p.to_s}"}.sort.join(', ')}" }
-			end
-			self[module_name.to_sym] = m
-		rescue => e
-			log.error "error while loading module '#{module_name}': #{e.class.name}: #{e.message}"
-		end
+class PollerModules < ModuleLoader
+	def initialize
+		super(PollerModule)
 	end
 end
 

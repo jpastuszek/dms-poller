@@ -26,16 +26,18 @@ class ProbeScheduler
 		@scheduler = PeriodicScheduler.new(quantum)
 	end
 
-	def schedule_modules(poller_modules)
-		poller_modules.each_value do |poller_module|
-			poller_module.each_value do |probe|
-				@all_probes << probe
-
+	def schedule_probes(probes)
+		probes.each do |probe|
+			begin
 				schedule = probe.schedule * @time_scale 
-				log.info "scheduling probe #{probe.module_name}/#{probe.probe_name} to run every #{schedule} seconds"
+				log.info "scheduling probe #{probe} to run every #{schedule} seconds"
 				@scheduler.schedule(schedule, true) do
 					probe
 				end
+
+				@all_probes << probe
+			rescue => error
+				log.error "failed to schedule probe: #{probe}: #{error.class.name}: #{error.message}"
 			end
 		end
 	end
