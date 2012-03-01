@@ -45,7 +45,7 @@ Feature: Poller should run probes in isolated environment
 		When it is started for 2 runs
 		Then exit status will be 0
 		And log output should include 'running probe: system/sysstat' 2 times
-		And last log line should include 'dms-poller done'
+		And last log line should include 'DMS Poller done'
 
 	Scenario: Slow running probe should not delay the scheduler
 		Given using poller modules directory slow
@@ -53,7 +53,7 @@ Feature: Poller should run probes in isolated environment
 		Then exit status will be 0
 		And log output should include 'running probe: system/sysstat' 2 times
 		But log output should not include 'missed schedule'
-		And last log line should include 'dms-poller done'
+		And last log line should include 'DMS Poller done'
 
 	Scenario: Scheduler should not allow running more than desired maximum number of processes in parallel
 		Given using poller modules directory stale
@@ -63,7 +63,7 @@ Feature: Poller should run probes in isolated environment
 		And log output should include 'running probe: system/sysstat' 2 times
 		And log output should include 'maximum number of scheduler run processes reached' 2 times
 		But log output should not include 'missed schedule'
-		And last log line should include 'dms-poller done'
+		And last log line should include 'DMS Poller done'
 
 	@timeout
 	Scenario: Scheduler run process should time-out its execution after specified maximum time
@@ -74,5 +74,5 @@ Feature: Poller should run probes in isolated environment
 		And log output should include 'running probe: system/sysstat' 2 times
 		And log output should include 'execution timed-out with limit of 0.5 seconds' 2 times
 		But log output should not include 'missed schedule'
-		And last log line should include 'dms-poller done'
+		And last log line should include 'DMS Poller done'
 
