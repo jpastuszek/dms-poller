@@ -17,7 +17,7 @@
 
 Given /data processor stub running at (.+) that expects (.+) messages/ do |data_processor_address, message_count|
 	
-	@data_processor_stub_pid, @data_processor_stdout_thread = spawn('dms-data-processor-stub', "--bind-address #{data_processor_address} --message-count #{message_count}")
+	@data_processor_stub_pid, @data_processor_stdout_thread = spawn('dms-data-processor-stub', "--data-bind-address #{data_processor_address} --message-count #{message_count}")
 end
 
 And /data processor will exit with (.+)/ do |status|

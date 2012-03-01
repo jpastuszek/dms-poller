@@ -24,16 +24,24 @@ require 'dms-poller'
 
 settings = CLI.new do
 	description "DMS data processor stub that will print out all received RawDataPoint objects"
-	option :bind_address,	:short => :p, :description => 'ZeroMQ bind adderss for RawDataPoints collection', :default => 'tcp://127.0.0.1:12100'
-	option :message_count, :short => :c, :cast => Integer, :description => 'exit after collecting given number of messages'
-	switch :suppress_output, :short => :s, :description => 'do not print messages'
+	option :data_bind_address,	
+		short: :b,
+		description: 'ZeroMQ bind adderss for RawDataPoints collection',
+		default: 'tcp://127.0.0.1:12100'
+	option :message_count,
+		short: :c,
+		cast: Integer,
+		description: 'exit after collecting given number of messages'
+	switch :suppress_output,
+		short: :s,
+		description: 'do not print messages'
 end.parse!
 
 ZeroMQ.new do |zmq|
 	start = Time.now.to_f
 	messages = 1
 	begin
-		zmq.pull_bind(settings.bind_address) do |pull|
+		zmq.pull_bind(settings.data_bind_address) do |pull|
 			until settings.message_count and messages > settings.message_count
 				message = pull.recv
 				puts "#{messages}: #{message}" unless settings.suppress_output
