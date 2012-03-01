@@ -155,5 +155,5 @@ ensure
 	collector_thread.shutdown(settings.linger_time + 2)
 end
 
-log.info "dms-poller done"
+log.info "DMS Poller done"
 
