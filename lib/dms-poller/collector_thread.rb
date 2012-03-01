@@ -26,7 +26,7 @@ class CollectorThread < ProcessingThread
 			ZeroMQ.new do |zmq|
 				begin
 					zmq.pull_bind(collector_bind_address) do |pull|
-						zmq.push_connect(data_processor_address, queue_message_count, disk_queue_size, 0, linger_time) do |push|
+						zmq.push_connect(data_processor_address, hwm: queue_message_count, swap: disk_queue_size, buffer: 0, linger: linger_time) do |push|
 							loop do
 								message = pull.recv
 								if message.class != RawDataPoint
