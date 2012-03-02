@@ -38,7 +38,7 @@ Feature: Poller should run probes in isolated environment
 		When it is started for 3 runs
 		Then exit status will be 0
 		And log output should include 'running probe: system/sysstat' 3 times
-		And log output should include 'Probe system/sysstat raised error: RuntimeError: test error' 3 times
+		And log output should include 'probe system/sysstat raised error: RuntimeError: test error' 3 times
 
 	Scenario: It should wait all running probes to finish before exiting
 		Given using poller modules directory slow

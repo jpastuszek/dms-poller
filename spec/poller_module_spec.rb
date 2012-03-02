@@ -68,7 +68,7 @@ describe PollerModule do
 					data << raw_data_point
 				end
 				data.should have(1).element
-			end.should include("Probe system/sysstat raised error: RuntimeError: test error")
+			end.should include("probe system/sysstat raised error: RuntimeError: test error")
 		end
 
 		it "schedule default to 60 seconds" do

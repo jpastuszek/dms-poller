@@ -37,7 +37,7 @@ class ProbeScheduler
 
 				@all_probes << probe
 			rescue => error
-				log.error "failed to schedule probe: #{probe}: #{error.class.name}: #{error.message}"
+				log.error "failed to schedule probe: #{probe}", error
 			end
 		end
 	end
@@ -49,7 +49,7 @@ class ProbeScheduler
 				@all_probes	
 			else
 				@scheduler.run do |error|
-					log.error "scheduler runtime error: #{error.class.name}: #{error.message}"
+					log.error "scheduler runtime error", error
 				end
 			end
 

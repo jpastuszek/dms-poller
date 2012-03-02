@@ -26,7 +26,7 @@ class ProcessingThread < Thread
 			rescue Interrupt
 				log.info "exiting"
 			rescue => error
-				log.fatal "got error: #{error.class.name}: #{error.message}"
+				log.fatal "got error", error
 			ensure
 				shutdown_queue.push self.class.name
 			end

@@ -41,8 +41,8 @@ class SchedulerRunProcessPool < ProcessPool
 					end
 				end
 				log.debug "done"
-			rescue => e
-				log.fatal "got error: #{e}: #{e.message}: #{e.backtrace.join("\n")}\nexiting"
+			rescue => error
+				log.fatal 'got error, exiting', error
 				exit!(3)
 			rescue Interrupt
 				log.info "interrupted, exiting"

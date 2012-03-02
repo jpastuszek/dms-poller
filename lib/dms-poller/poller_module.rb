@@ -34,8 +34,8 @@ class PollerModule < ModuleBase
 				@location = location
 				@collector = block
 				instance_eval &@probe_code
-			rescue => e
-				log.error "Probe #{@name} raised error: #{e.class.name}: #{e.message}"
+			rescue => error
+				log.error "probe #{@name} raised error", error
 			ensure
 				@location = nil
 				@collector = nil
