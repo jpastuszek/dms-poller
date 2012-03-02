@@ -33,6 +33,7 @@ Feature: Poller should run probes in isolated environment
 		end.schedule_every 5.second
 		"""
 
+	@broken
 	Scenario: It should not crash on errors from probes and should log them
 		Given using poller modules directory broken
 		When it is started for 3 runs

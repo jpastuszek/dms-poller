@@ -115,18 +115,6 @@ describe PollerModule do
 		subject.probes.shift.should be_a PollerModule::Probe
 		subject.probes.shift.should be_a PollerModule::Probe
 	end
-	
-	it "can be loaded from string" do
-		Capture.stderr do
-			m = PollerModule.load('system', <<'EOF')
-				probe('sysstat') do
-				collect 'CPU usage/total', 'idle', 3123
-				collect 'system/process', 'blocked', 0
-			end
-EOF
-			m.probes.shift.should be_a PollerModule::Probe
-		end
-	end
 end
 
 describe PollerModules do
