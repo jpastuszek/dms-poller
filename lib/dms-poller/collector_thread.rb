@@ -28,14 +28,7 @@ class CollectorThread < ProcessingThread
 					zmq.pull_bind(collector_bind_address) do |pull|
 						zmq.push_connect(data_processor_address, hwm: queue_message_count, swap: disk_queue_size, buffer: 0, linger: linger_time) do |push|
 							loop do
-								begin
-									message = pull.recv(RawDataPoint)
-
-									#log.debug "sending #{message}"
-									push.send message
-								rescue ZeroMQ::Receiver::UnexpectedMessageType => error
-									log.warn error.message
-								end
+								push.send_raw pull.recv_raw
 							end
 						end
 					end 
