@@ -42,10 +42,13 @@ ZeroMQ.new do |zmq|
 	messages = 1
 	begin
 		zmq.pull_bind(settings.data_bind_address) do |pull|
-			until settings.message_count and messages > settings.message_count
-				message = pull.recv
+			pull.on_other do |message|
 				puts "#{messages}: #{message}" unless settings.suppress_output
 				messages += 1
+			end
+
+			until settings.message_count and messages > settings.message_count
+				pull.receive!
 			end
 		end
 	ensure

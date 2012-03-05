@@ -50,8 +50,12 @@ describe SchedulerRunProcessPool do
 				end
 
 				raw_data = []
+				pull.on RawDataPoint do |message|
+					raw_data << message
+				end
+
 				5.times do
-					raw_data << pull.recv
+					pull.receive!
 				end
 
 				raw_data.should have(5).raw_data_point
