@@ -20,40 +20,48 @@ $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 
 require 'cli'
 require 'pathname'
-require 'dms-poller'
+require 'dms-core'
 
-settings = CLI.new do
-	description "DMS data processor stub that will print out all received RawDataPoint objects"
-	option :data_bind_address,	
-		short: :b,
-		description: 'ZeroMQ bind adderss for RawDataPoints collection',
-		default: 'tcp://127.0.0.1:12100'
-	option :message_count,
-		short: :c,
-		cast: Integer,
-		description: 'exit after collecting given number of messages'
-	switch :suppress_output,
-		short: :s,
-		description: 'do not print messages'
-end.parse!
+VERSION = (Pathname.new(__FILE__).dirname + '../VERSION').read
 
-ZeroMQ.new do |zmq|
-	start = Time.now.to_f
-	messages = 1
-	begin
-		zmq.pull_bind(settings.data_bind_address) do |pull|
-			pull.on_other do |message|
-				puts "#{messages}: #{message}" unless settings.suppress_output
-				messages += 1
-			end
+Program::Daemon.new('DMS Data Processor Stub', VERSION) do
+	cli do
+		description "DMS data processor stub that will print out all received RawDataPoint objects"
+		option :data_bind_address,	
+			short: :b,
+			description: 'ZeroMQ bind adderss for RawDataPoints collection',
+			default: 'tcp://127.0.0.1:12100'
+		option :message_count,
+			short: :c,
+			cast: Integer,
+			description: 'exit after collecting given number of messages'
+		switch :suppress_output,
+			short: :s,
+			description: 'do not print messages'
+	end
 
-			until settings.message_count and messages > settings.message_count
-				pull.receive!
+	main do |settings|
+		ZeroMQ.new do |zmq|
+			start = Time.now.to_f
+			messages = 1
+			begin
+				zmq.pull_bind(settings.data_bind_address) do |pull|
+					pull.on_other do |message|
+						puts "#{messages}: #{message}" unless settings.suppress_output
+						messages += 1
+					end
+
+					main_loop do
+						until settings.message_count and messages > settings.message_count
+							pull.receive!
+						end
+					end
+				end
+			ensure
+				took = Time.now.to_f - start
+				puts "Took: #{took} seconds; #{messages.to_f / took} messages/s"
 			end
 		end
-	ensure
-		took = Time.now.to_f - start
-		puts "Took: #{took} seconds; #{messages.to_f / took} messages/s"
 	end
 end
 

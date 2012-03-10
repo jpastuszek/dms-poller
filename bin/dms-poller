@@ -25,135 +25,125 @@ require 'dms-poller'
 
 VERSION = (Pathname.new(__FILE__).dirname + '../VERSION').read
 
-settings = CLI.new do
-	description "DMS data collection agent"
-	version VERSION
-	switch :debug,
-		short: :d,
-		description: 'enable debugging'
-	options :module_dir,
-		short: :m,
-		cast: Pathname,
-		description: 'path to directory from which poller modules are loaded',
-		default: Pathname.new(__FILE__).dirname + '..' + 'module.d'
-	switch :startup_run,
-		short: :s,
-		description: 'run all probes on startup (may cause load spike)'
-	option :collector_bind_address,
-		short: :b,
-		description: 'ZeroMQ bind adderss of probe data collection endpoint',
-		default: 'ipc:///tmp/dms-poller-collector'
-	option :data_processor_address,	
-		short: :D,
-		description: 'ZeroMQ adderss of data processor that all collected data will be pushed to',
-		default: 'tcp://127.0.0.1:12100'
-	option :location,
-		short: :l,
-		description: 'location string',
-		default: Facter.fqdn
-	option :queue_message_count,
-		short: :c,
-		cast: Integer,
-		description: 'queue up to specified number of data messages in memory if data processor is not available',
-		default: '20_000'
-	option :disk_queue_size,
-		short: :C,
-		cast: Integer,
-		description: 'use up to specified number of bytes to queue data messages to disk if memory queue is full',
-		default: '20_000_000'
-	option :process_limit,
-		short: :p,
-		cast: Integer,
-		description: 'maximum number of scheduler run processes that can run in parallel',
-		default: 8
-	option :process_time_out,
-		short: :o,
-		cast: Float,
-		description: 'maximum number of seconds that a scheduler run process can run',
-		default: 120
-	option :scheduler_quantum,
-		short: :q,
-		cast: Float,
-		description: 'minimal time between scheduler runs in seconds',
-		default: 1.0
-	option :linger_time,
-		short: :L,
-		cast: Integer,
-		description: 'how many seconds to wait for outstanding messages to be sent to data processor before exiting',
-		default: 10
-	option :runs,
-		short: :r,
-		cast: Integer,
-		description: 'run specific number of scheduler runs and exit (useful for testing)'
-	option :time_scale,
-		short: :t,
-		cast: Float,
-		description: 'scheduling time scale - 0.1 is 10x faster (useful for testing)',
-		default: 1.0
-end.parse! do |settings|
-	settings.module_dir.each do |m|
-		fail "module directory does not exist: #{m}" unless m.directory?
+Program::Daemon.new('DMS Poller', VERSION) do
+	cli do
+		description "DMS data collection agent"
+		options :module_dir,
+			short: :m,
+			cast: Pathname,
+			description: 'path to directory from which poller modules are loaded',
+			default: Pathname.new(__FILE__).dirname + '..' + 'module.d'
+		switch :startup_run,
+			short: :s,
+			description: 'run all probes on startup (may cause load spike)'
+		option :collector_bind_address,
+			short: :b,
+			description: 'ZeroMQ bind adderss of probe data collection endpoint',
+			default: 'ipc:///tmp/dms-poller-collector'
+		option :data_processor_address,	
+			short: :D,
+			description: 'ZeroMQ adderss of data processor that all collected data will be pushed to',
+			default: 'tcp://127.0.0.1:12100'
+		option :location,
+			short: :l,
+			description: 'location string',
+			default: Facter.fqdn
+		option :queue_message_count,
+			short: :c,
+			cast: Integer,
+			description: 'queue up to specified number of data messages in memory if data processor is not available',
+			default: '20_000'
+		option :disk_queue_size,
+			short: :C,
+			cast: Integer,
+			description: 'use up to specified number of bytes to queue data messages to disk if memory queue is full',
+			default: '20_000_000'
+		option :process_limit,
+			short: :p,
+			cast: Integer,
+			description: 'maximum number of scheduler run processes that can run in parallel',
+			default: 8
+		option :process_time_out,
+			short: :o,
+			cast: Float,
+			description: 'maximum number of seconds that a scheduler run process can run',
+			default: 120
+		option :scheduler_quantum,
+			short: :q,
+			cast: Float,
+			description: 'minimal time between scheduler runs in seconds',
+			default: 1.0
+		option :linger_time,
+			short: :L,
+			cast: Integer,
+			description: 'how many seconds to wait for outstanding messages to be sent to data processor before exiting',
+			default: 10
+		option :runs,
+			short: :r,
+			cast: Integer,
+			description: 'run specific number of scheduler runs and exit (useful for testing)'
+		option :time_scale,
+			short: :t,
+			cast: Float,
+			description: 'scheduling time scale - 0.1 is 10x faster (useful for testing)',
+			default: 1.0
 	end
 
-	settings.module_dir = settings.module_dir.map{|m| m.realpath}
-end
+	validate do |settings|
+		settings.module_dir.each do |m|
+			fail "module directory does not exist: #{m}" unless m.directory?
+		end
 
-Logging.logger.root.level = :debug if settings.debug
+		settings.module_dir = settings.module_dir.map{|m| m.realpath}
+	end
 
-logging_class_name 'DMSPoller'
-log.info "Starting DMS Poller version #{VERSION} (LibZMQ version #{ZeroMQ.lib_version}, ffi-ruby version #{ZeroMQ.binding_version}); location: #{settings.location}; pid #{Process.pid}"
+	main do |settings|
+		poller_modules = PollerModules.new
 
-log.debug settings.inspect
+		probes = []
+		settings.module_dir.each do |module_dir|
+			poller_modules.load_directory(module_dir).each do |poller_module|
+				probes.concat poller_module.probes
+			end
+		end
 
-poller_modules = PollerModules.new
+		# used to signal shutdown form threads
+		shutdown_queue = Queue.new
 
-probes = []
-settings.module_dir.each do |module_dir|
-	poller_modules.load_directory(module_dir).each do |poller_module|
-		probes.concat poller_module.probes
+		log.info "Starting collector thread"
+		collector_thread = CollectorThread.new(
+			shutdown_queue, 
+			settings.collector_bind_address, 
+			settings.data_processor_address, 
+			settings.queue_message_count,
+			settings.disk_queue_size,
+			settings.linger_time
+		)
+
+		log.info "Starting scheduler thread"
+		scheduler_thread = SchedulerThread.new(
+			shutdown_queue,
+			probes, 
+			settings.location,
+			settings.collector_bind_address,
+			settings.scheduler_quantum * settings.time_scale, 
+			settings.time_scale, 
+			settings.runs, 
+			settings.startup_run, 
+			settings.process_limit,
+			settings.process_time_out
+		)
+
+		begin
+			main_loop do
+				# wait for thread shutdown
+				thread_name = shutdown_queue.pop
+				log.info "thread #{thread_name} exited"
+			end
+		ensure
+			scheduler_thread.shutdown(settings.process_time_out + 2)
+			collector_thread.shutdown(settings.linger_time + 2)
+		end
 	end
 end
-
-# used to signal shutdown form threads
-shutdown_queue = Queue.new
-
-log.info "Starting collector thread"
-collector_thread = CollectorThread.new(
-	shutdown_queue, 
-	settings.collector_bind_address, 
-	settings.data_processor_address, 
-	settings.queue_message_count,
-	settings.disk_queue_size,
-	settings.linger_time
-)
-
-log.info "Starting scheduler thread"
-scheduler_thread = SchedulerThread.new(
-	shutdown_queue,
-	probes, 
-	settings.location,
-	settings.collector_bind_address,
-	settings.scheduler_quantum * settings.time_scale, 
-	settings.time_scale, 
-	settings.runs, 
-	settings.startup_run, 
-	settings.process_limit,
-	settings.process_time_out
-)
-
-log.info "DMS Poller ready"
-
-begin
-	# wait for thread shutdown
-	thread_name = shutdown_queue.pop
-	log.info "thread #{thread_name} exited"
-rescue Interrupt
-	log.info "interrupted"
-ensure
-	log.info "shutting down..."
-	scheduler_thread.shutdown(settings.process_time_out + 2)
-	collector_thread.shutdown(settings.linger_time + 2)
-end
-
-log.info "DMS Poller done"
 
