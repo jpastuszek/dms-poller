@@ -73,11 +73,7 @@ Program::Daemon.new('DMS Poller', VERSION) do
 			cast: Float,
 			description: 'minimal time between scheduler runs in seconds',
 			default: 1.0
-		option :linger_time,
-			short: :L,
-			cast: Integer,
-			description: 'how many seconds to wait for outstanding messages to be sent to data processor before exiting',
-			default: 10
+		linger_time
 		option :runs,
 			short: :r,
 			cast: Integer,
