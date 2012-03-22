@@ -16,30 +16,28 @@
 # along with Distributed Monitoring System.  If not, see <http://www.gnu.org/licenses/>.
 
 Given /data processor stub running at (.+) that expects (.+) messages/ do |data_processor_address, message_count|
-	
-	@data_processor_stub_pid, @data_processor_stdout_thread = spawn('dms-data-processor-stub', "--data-bind-address #{data_processor_address} --message-count #{message_count}")
+	@data_processor_program = RunProgram.new('dms-data-processor-stub', "--data-bind-address #{data_processor_address} --message-count #{message_count}")
 end
 
 And /data processor will exit with (.+)/ do |status|
 	begin
 		Timeout.timeout(2) do
-			Process.waitpid(@data_processor_stub_pid)
-			$?.exitstatus.should == status.to_i	
-			@data_processor_stdout = @data_processor_stdout_thread.value
+			@data_processor_program.wait.should == status.to_i	
+			@data_processor_output = @data_processor_program.output
 		end
 	rescue Timeout::Error
-		Process.kill('TERM', @data_processor_stub_pid)
+		@data_processor_program.terminate
 		raise
 	end
 end
 
 And /data processor output should include '(.+)' (.+) time/ do |entry, times|
-	@data_processor_stdout.scan(entry).size.should == times.to_i
+	@data_processor_output.scan(entry).size.should == times.to_i
 end
 
 And /data processor output should include local host name (.+) time/ do |times|
 	entry = Facter.fqdn
-	@data_processor_stdout.scan(entry).size.should == times.to_i
+	@data_processor_output.scan(entry).size.should == times.to_i
 end
 
 Given /poller module directory (.+) containing module (.+):/ do |module_dir, module_name, module_content|
@@ -99,15 +97,15 @@ When /it is started for (.+) runs/ do |runs|
 	@program_args = @program_args.join(' ') + ' ' + "--runs #{runs.to_i}"
 
 	puts "#{@program} #{@program_args}"
-	@program_out, @program_log, @program_status = run(@program, @program_args)
-	#p @program_out
+	prog = RunProgram.new(@program, @program_args)
+	@program_status = prog.wait
+	@program_log = prog.output
 	puts @program_log
-	#p @program_status
 end
 
 
 Then /exit status will be (.+)/ do |status|
-	@program_status.exitstatus.should == status.to_i	
+	@program_status.should == status.to_i	
 end
 
 Then /log output should include following entries:/ do |log_entries|
