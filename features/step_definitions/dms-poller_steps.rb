@@ -70,18 +70,6 @@ Then /exit status will be (.+)/ do |status|
 	@program_status.should == status.to_i	
 end
 
-Then /log output should include following entries:/ do |log_entries|
-	log_entries.raw.flatten.each do |entry|
-		@program_log.should include(entry)
-	end
-end
-
-Then /log output should not include following entries:/ do |log_entries|
-	log_entries.raw.flatten.each do |entry|
-		@program_log.should_not include(entry)
-	end
-end
-
 Then /log output should not include '(.+)'/ do |entry|
 	@program_log.should_not include(entry)
 end
