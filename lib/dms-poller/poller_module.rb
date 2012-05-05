@@ -33,6 +33,7 @@ class PollerModule < ModuleBase
 			begin
 				@location = location
 				@collector = block
+				@time_stamp = Time.now.utc
 				instance_eval &@probe_code
 			rescue => error
 				log.error "probe #{@name} raised error", error
@@ -58,7 +59,7 @@ class PollerModule < ModuleBase
 		private
 
 		def collect(path, component, value, options = {})
-			@collector.call(RawDataPoint.new((options[:location] or @location), path, component, value))
+			@collector.call(RawDataPoint.new((options[:location] or @location), path, component, value, @time_stamp))
 		end
 	end
 
