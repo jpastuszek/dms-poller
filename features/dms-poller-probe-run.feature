@@ -3,10 +3,10 @@ Feature: Poller should run probes in isolated environment
 	It has to run probes in isolated environment
 
 	Background:
-		Given time scale 0.01
-		And use startup run
-		And dms-poller program use linger time of 0
-		And dms-poller program debug enabled
+		Given dms-poller is using time scale of 0.01
+		And dms-poller is using startup run
+		And dms-poller is using linger time of 0
+		And dms-poller has debug enabled
 		Given poller module directory broken containing module system:
 		"""
 		probe('sysstat') do
@@ -34,50 +34,50 @@ Feature: Poller should run probes in isolated environment
 
 	@broken
 	Scenario: It should not crash on errors from probes and should log them
-		Given using poller modules directory broken
-		Given it is started for 3 runs
-		Then I wait it exits
-		And exit status will be 0
-		And log output should include 'running probe: system/sysstat' 3 times
-		And log output should include 'probe system/sysstat raised error: RuntimeError: test error' 3 times
+		Given dms-poller is using poller modules directory broken
+		Given dms-poller is started for 3 runs
+		When I wait dms-poller to exit
+		Then dms-poller exit status will be 0
+		And dms-poller log output should include 'running probe: system/sysstat' 3 times
+		And dms-poller log output should include 'probe system/sysstat raised error: RuntimeError: test error' 3 times
 
 	Scenario: It should wait all running probes to finish before exiting
-		Given using poller modules directory slow
-		Given it is started for 2 runs
-		Then I wait it exits
-		And exit status will be 0
-		And log output should include 'running probe: system/sysstat' 2 times
-		And last log line should include 'DMS Poller done'
+		Given dms-poller is using poller modules directory slow
+		Given dms-poller is started for 2 runs
+		When I wait dms-poller to exit
+		Then dms-poller exit status will be 0
+		And dms-poller log output should include 'running probe: system/sysstat' 2 times
+		And dms-poller last log line should include 'DMS Poller done'
 
 	Scenario: Slow running probe should not delay the scheduler
-		Given using poller modules directory slow
-		Given it is started for 2 runs
-		Then I wait it exits
-		And exit status will be 0
-		And log output should include 'running probe: system/sysstat' 2 times
-		But log output should not include 'missed schedule'
-		And last log line should include 'DMS Poller done'
+		Given dms-poller is using poller modules directory slow
+		Given dms-poller is started for 2 runs
+		When I wait dms-poller to exit
+		Then dms-poller exit status will be 0
+		And dms-poller log output should include 'running probe: system/sysstat' 2 times
+		But dms-poller log output should not include 'missed schedule'
+		And dms-poller last log line should include 'DMS Poller done'
 
 	Scenario: Scheduler should not allow running more than desired maximum number of processes in parallel
-		Given using poller modules directory stale
-		And scheduler run process limit of 2
-		Given it is started for 4 runs
-		Then I wait it exits
-		And exit status will be 0
-		And log output should include 'running probe: system/sysstat' 2 times
-		And log output should include 'maximum number of scheduler run processes reached' 2 times
-		But log output should not include 'missed schedule'
-		And last log line should include 'DMS Poller done'
+		Given dms-poller is using poller modules directory stale
+		And dms-poller scheduler process limit is set to 2
+		Given dms-poller is started for 4 runs
+		When I wait dms-poller to exit
+		Then dms-poller exit status will be 0
+		And dms-poller log output should include 'running probe: system/sysstat' 2 times
+		And dms-poller log output should include 'maximum number of scheduler run processes reached' 2 times
+		But dms-poller log output should not include 'missed schedule'
+		And dms-poller last log line should include 'DMS Poller done'
 
 	@timeout
 	Scenario: Scheduler run process should time-out its execution after specified maximum time
-		Given using poller modules directory stale
-		And scheduler run process time-out of 0.5 seconds
-		Given it is started for 2 runs
-		Then I wait it exits
-		And exit status will be 0
-		And log output should include 'running probe: system/sysstat' 2 times
-		And log output should include 'execution timed-out with limit of 0.5 seconds' 2 times
-		But log output should not include 'missed schedule'
-		And last log line should include 'DMS Poller done'
+		Given dms-poller is using poller modules directory stale
+		And dms-poller scheduler run process time-out of 0.5 seconds
+		Given dms-poller is started for 2 runs
+		When I wait dms-poller to exit
+		Then dms-poller exit status will be 0
+		And dms-poller log output should include 'running probe: system/sysstat' 2 times
+		And dms-poller log output should include 'execution timed-out with limit of 0.5 seconds' 2 times
+		But dms-poller log output should not include 'missed schedule'
+		And dms-poller last log line should include 'DMS Poller done'
 

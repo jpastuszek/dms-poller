@@ -26,66 +26,74 @@ Given /poller module directory (.+) containing module (.+):/ do |module_dir, mod
 	end
 end
 
-Given /using poller modules directory (.+)/ do |module_dir|
+Given /dms-poller is using poller modules directory (.+)/ do |module_dir|
 	raise "module dir #{module_dir} not defined!" unless @module_dirs.member? module_dir
 	step "dms-poller program argument --module-dir #{@module_dirs[module_dir].to_s}"
 end
 
-Given /time scale (.+)/ do |time_scale|
+Given /dms-poller is using linger time of (.+)/ do |linger|
+	step "dms-poller program is using linger time of #{linger}"
+end
+
+Given /dms-poller has debug enabled/ do
+	step "dms-poller program has debug enabled"
+end
+
+Given /dms-poller is using time scale of (.+)/ do |time_scale|
 	step "dms-poller program argument --time-scale #{time_scale}"
 end
 
-Given /use startup run/ do
+Given /dms-poller is using startup run/ do
 	step "dms-poller program argument --startup-run"
 end
 
-Given /scheduler run process limit of (.+)/ do |limit|
+Given /dms-poller scheduler process limit is set to (.+)/ do |limit|
 	step "dms-poller program argument --process-limit #{limit.to_i}"
 end
 
-Given /scheduler run process time-out of (.+)/ do |timeout|
+Given /dms-poller scheduler run process time-out of (.+)/ do |timeout|
 	step "dms-poller program argument --process-time-out #{timeout.to_f}"
 end
 
-And /bind collector at (.+)/ do |bind_address|
+Given /dms-poller binds with collector at (.+)/ do |bind_address|
 	step "dms-poller program argument --collector-bind-address #{bind_address}"
 end
 
-And /connect with data processor at (.+)/ do |data_processor_address|
+Given /dms-poller connects with data processor at (.+)/ do |data_processor_address|
 	@data_processor_address = data_processor_address
 	step "dms-poller program argument --data-processor-address #{data_processor_address}"
 end
 
-Given /it is started$/ do
+Given /dms-poller is started$/ do
 	step 'dms-poller program is spawned'
 end
 
-Given /it is started for (.+) runs/ do |runs|
+Given /dms-poller is started for (.+) runs/ do |runs|
 	step "dms-poller program argument --runs #{runs.to_i}"
-	step 'it is started'
+	step 'dms-poller is started'
 end
 
-When /I wait it exits/ do
+When /I wait dms-poller to exit/ do
 	 step 'I wait for dms-poller program termination'
 end
 
-Then /terminate the process/ do
+Then /I terminate dms-poller/ do
 	step "dms-poller program is terminated"
 end
 
-Then /exit status will be (.+)/ do |status|
+Then /dms-poller exit status will be (.+)/ do |status|
 	step "dms-poller program exit status should be #{status}"
 end
 
-Then /log output should not include '(.+)'/ do |entry|
+Then /dms-poller log output should not include '(.+)'/ do |entry|
 	step "dms-poller program output should not include '#{entry}'"
 end
 
-Then /log output should include '(.+)' (.+) time/ do |entry, times|
+Then /dms-poller log output should include '(.+)' (.+) time/ do |entry, times|
 	step "dms-poller program output should include '#{entry}' #{times} time"
 end
 
-Then /last log line should include '(.+)'/ do |entry|
+Then /dms-poller last log line should include '(.+)'/ do |entry|
 	step "dms-poller program last output line should include '#{entry}'"
 end
 
