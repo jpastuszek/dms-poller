@@ -28,58 +28,65 @@ end
 
 Given /using poller modules directory (.+)/ do |module_dir|
 	raise "module dir #{module_dir} not defined!" unless @module_dirs.member? module_dir
-	@program_args << ['--module-dir', @module_dirs[module_dir].to_s]
+	step "dms-poller program argument --module-dir #{@module_dirs[module_dir].to_s}"
 end
 
 Given /time scale (.+)/ do |time_scale|
-	@program_args << ['--time-scale', time_scale]
+	step "dms-poller program argument --time-scale #{time_scale}"
 end
 
 Given /use startup run/ do
-	@program_args << ['--startup-run']
+	step "dms-poller program argument --startup-run"
 end
 
 Given /scheduler run process limit of (.+)/ do |limit|
-	@program_args << ['--process-limit', limit.to_i]
+	step "dms-poller program argument --process-limit #{limit.to_i}"
 end
 
 Given /scheduler run process time-out of (.+)/ do |timeout|
-	@program_args << ['--process-time-out', timeout.to_f]
+	step "dms-poller program argument --process-time-out #{timeout.to_f}"
 end
 
 And /bind collector at (.+)/ do |bind_address|
-	@program_args << ['--collector-bind-address', bind_address]
+	step "dms-poller program argument --collector-bind-address #{bind_address}"
 end
 
 And /connect with data processor at (.+)/ do |data_processor_address|
 	@data_processor_address = data_processor_address
-	@program_args << ['--data-processor-address', data_processor_address]
+	step "dms-poller program argument --data-processor-address #{data_processor_address}"
 end
 
-When /it is started for (.+) runs/ do |runs|
-	@program_args = @program_args.join(' ') + ' ' + "--runs #{runs.to_i}"
+Given /it is started$/ do
+	step 'dms-poller program is spawned'
+end
 
-	puts "#{@program} #{@program_args}"
-	prog = RunProgram.new(@program, @program_args)
-	@program_status = prog.wait
-	@program_log = prog.output
-	puts @program_log
+Given /it is started for (.+) runs/ do |runs|
+	step "dms-poller program argument --runs #{runs.to_i}"
+	step 'it is started'
+end
+
+When /I wait it exits/ do
+	 step 'I wait for dms-poller program termination'
+end
+
+Then /terminate the process/ do
+	step "dms-poller program is terminated"
 end
 
 Then /exit status will be (.+)/ do |status|
-	@program_status.should == status.to_i	
+	step "dms-poller program exit status should be #{status}"
 end
 
 Then /log output should not include '(.+)'/ do |entry|
-	@program_log.should_not include(entry)
+	step "dms-poller program output should not include '#{entry}'"
 end
 
 Then /log output should include '(.+)' (.+) time/ do |entry, times|
-	@program_log.scan(entry).size.should == times.to_i
+	step "dms-poller program output should include '#{entry}' #{times} time"
 end
 
 Then /last log line should include '(.+)'/ do |entry|
-	@program_log.lines.to_a.last.should include(entry)
+	step "dms-poller program last output line should include '#{entry}'"
 end
 
 Then /data processor should receive following RawDataPoints:/ do |raw_data_points|

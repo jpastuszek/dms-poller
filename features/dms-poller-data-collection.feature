@@ -4,11 +4,10 @@ Feature: Poller should collect RawDataPoint from running probes
 
 
 	Background:
-		Given dms-poller program
-		And time scale 0.01
+		Given time scale 0.01
 		And use startup run
-		And use linger time of 2
-		And debug enabled
+		And dms-poller program use linger time of 2
+		And dms-poller program debug enabled
 		And bind collector at ipc:///tmp/dms-poller-collector-test
 		Given poller module directory basic containing module system:
 		"""
