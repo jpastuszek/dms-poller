@@ -26,59 +26,51 @@ Given /poller module directory (.+) containing module (.+):/ do |module_dir, mod
 	end
 end
 
-Given /dms-poller is using poller modules directory (.+)/ do |module_dir|
+Given /([^ ]*) is using poller modules directory (.+)/ do |program, module_dir|
 	raise "module dir #{module_dir} not defined!" unless @module_dirs.member? module_dir
-	step "dms-poller argument --module-dir #{@module_dirs[module_dir].to_s}"
+	step "#{program} argument --module-dir #{@module_dirs[module_dir].to_s}"
 end
 
-Given /dms-poller is using time scale of (.+)/ do |time_scale|
-	step "dms-poller argument --time-scale #{time_scale}"
+Given /([^ ]*) is using time scale of (.+)/ do |program, time_scale|
+	step "#{program} argument --time-scale #{time_scale}"
 end
 
-Given /dms-poller is using startup run/ do
-	step "dms-poller argument --startup-run"
+Given /([^ ]*) is using startup run/ do |program|
+	step "#{program} argument --startup-run"
 end
 
-Given /dms-poller scheduler process limit is set to (.+)/ do |limit|
-	step "dms-poller argument --process-limit #{limit.to_i}"
+Given /([^ ]*) scheduler process limit is set to (.+)/ do |program, limit|
+	step "#{program} argument --process-limit #{limit.to_i}"
 end
 
-Given /dms-poller scheduler run process time-out of (.+)/ do |timeout|
-	step "dms-poller argument --process-time-out #{timeout.to_f}"
+Given /([^ ]*) scheduler run process time-out of (.+)/ do |program, timeout|
+	step "#{program} argument --process-time-out #{timeout.to_f}"
 end
 
-Given /dms-poller binds with collector at (.+)/ do |bind_address|
-	step "dms-poller argument --collector-bind-address #{bind_address}"
+Given /([^ ]*) binds with collector at (.+)/ do |program, bind_address|
+	step "#{program} argument --collector-bind-address #{bind_address}"
 end
 
-Given /dms-poller connects with data processor at (.+)/ do |data_processor_address|
+Given /([^ ]*) connects with data processor at (.+)/ do |program, data_processor_address|
 	@data_processor_address = data_processor_address
-	step "dms-poller argument --data-processor-address #{data_processor_address}"
+	step "#{program} argument --data-processor-address #{data_processor_address}"
 end
 
-Given /dms-poller is started for (.+) runs/ do |runs|
-	step "dms-poller argument --runs #{runs.to_i}"
-	step 'dms-poller is spawned'
+Given /([^ ]*) is started for (.+) runs/ do |program, runs|
+	step "#{program} argument --runs #{runs.to_i}"
+	step "#{program} is spawned"
 end
 
-When /I wait dms-poller to exit/ do
-	 step 'I wait for dms-poller termination'
+Then /([^ ]*) log should not include '(.+)'/ do |program, entry|
+	step "#{program} output should not include '#{entry}'"
 end
 
-Then /dms-poller exit status will be (.+)/ do |status|
-	step "dms-poller exit status should be #{status}"
+Then /([^ ]*) log should include '(.+)' (.+) time/ do |program, entry, times|
+	step "#{program} output should include '#{entry}' #{times} time"
 end
 
-Then /dms-poller log should not include '(.+)'/ do |entry|
-	step "dms-poller output should not include '#{entry}'"
-end
-
-Then /dms-poller log should include '(.+)' (.+) time/ do |entry, times|
-	step "dms-poller output should include '#{entry}' #{times} time"
-end
-
-Then /dms-poller last log line should include '(.+)'/ do |entry|
-	step "dms-poller last output line should include '#{entry}'"
+Then /([^ ]*) last log line should include '(.+)'/ do |program, entry|
+	step "#{program} last output line should include '#{entry}'"
 end
 
 Then /data processor should receive following RawDataPoints:/ do |raw_data_points|
