@@ -21,7 +21,7 @@ probe('usage') do
 			vol_name = volume[5]
 			vol_name = 'ROOT' if vol_name == '/'
 
-			collect "disk/usage/#{vol_name}", 'total', volume[1].to_i * 1024
+			#collect "disk/usage/#{vol_name}", 'total', volume[1].to_i * 1024
 			collect "disk/usage/#{vol_name}", 'used', volume[2].to_i * 1024
 			collect "disk/usage/#{vol_name}", 'free', volume[3].to_i * 1024
 		end
