@@ -46,7 +46,7 @@ Program::Daemon.new('DMS Data Processor Stub', VERSION) do
 			messages = 1
 			begin
 				zmq.pull_bind(settings.data_bind_address) do |pull|
-					pull.on_other do |message|
+					pull.on :any do |message|
 						puts "#{messages}: #{message}" unless settings.suppress_output
 						messages += 1
 					end

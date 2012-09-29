@@ -27,7 +27,7 @@ class CollectorThread < ProcessingThread
 				begin
 					zmq.pull_bind(collector_bind_address) do |pull|
 						zmq.push_connect(data_processor_address, hwm: queue_message_count, swap: disk_queue_size, buffer: 0, linger: linger_time) do |push|
-							pull.on_raw do |message|
+							pull.on :raw do |message|
 								push.send_raw message
 							end
 
