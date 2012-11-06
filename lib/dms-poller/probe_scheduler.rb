@@ -31,7 +31,7 @@ class ProbeScheduler
 			begin
 				schedule = probe.schedule * @time_scale 
 				log.info "scheduling probe #{probe} to run every #{schedule} seconds"
-				@scheduler.schedule(schedule, true) do
+				@scheduler.every(schedule) do
 					probe
 				end
 
