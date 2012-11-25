@@ -86,3 +86,14 @@ if File.exist? '/proc/meminfo'
 	end.schedule_every 30.seconds
 end
 
+probe('system load') do
+	begin
+		load_avg = `w | head -1`.match(/.*: (.*)/).captures.last.split(' ').map{|d| Float(d.tr(',', '.'))}
+		collect 'system/load', '1', load_avg[0]
+		collect 'system/load', '5', load_avg[1]
+		collect 'system/load', '15', load_avg[2]
+	rescue Errno::ENOENT
+		# w not available
+	end
+end
+
