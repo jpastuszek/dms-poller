@@ -17,8 +17,10 @@
 
 probe('usage') do
 	begin
+		# On Mac: 
+		# Filesystem                        1024-blocks      Used Available Capacity  iused   ifree %iused  Mounted on
 		`df -k -l`.split("\n")[1..-1].map{|v| v.split(/\s+/)}.each do |volume|
-			vol_name = volume[5]
+			vol_name = volume[8]
 			vol_name = 'ROOT' if vol_name == '/'
 
 			#collect "disk/usage/#{vol_name}", 'total', volume[1].to_i * 1024
